@@ -12,11 +12,37 @@ An AI-powered agent built with LangChain and OpenAI GPT-4 to help troubleshoot K
 - ✅ Interactive chat interface
 - ✅ ReAct reasoning pattern for systematic troubleshooting
 
-### Phase 2: Enhanced Intelligence (Coming Soon)
-- 🔄 Conversation memory and context awareness
-- 🔄 Common error pattern recognition
+### Phase 2: Enhanced Intelligence (Prioritized for Responsiveness + Capability)
+- 🔄 Conversation memory and session context reuse
+- 🔄 Common error pattern recognition for faster diagnosis
+- 🔄 Intent classification and direct routing for common troubleshooting flows
+- 🔄 Cached tool results within a troubleshooting session
 - 🔄 Consul Connect sidecar proxy diagnostics
 - 🔄 Advanced service-to-service communication analysis
+
+### Phase 2 Priorities
+
+Phase 2 is being prioritized around two goals:
+
+1. **Responsiveness**
+   - Reduce unnecessary LLM/tool loops
+   - Reuse context already gathered in the current session
+   - Route common troubleshooting questions into targeted workflows
+
+2. **Capability**
+   - Improve follow-up question handling
+   - Recognize recurring Kubernetes and Consul failure patterns
+   - Expand diagnostics for Consul Connect and service-to-service issues
+
+Planned implementation order for highest user value:
+1. Conversation memory and session context reuse
+2. Intent classification and direct routing for common issues
+3. Session-scoped caching of tool results
+4. Common error pattern recognition
+5. Consul Connect sidecar proxy diagnostics
+6. Advanced service-to-service communication analysis
+
+This keeps the original Phase 2 direction intact while reordering work to improve speed and usability first.
 
 ### Phase 3: Advanced Workflows (Future)
 - 📋 LangGraph state machines for complex diagnostics
