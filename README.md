@@ -28,10 +28,12 @@ An AI-powered agent built with LangChain and OpenAI GPT-4 to help troubleshoot K
 
 ### Prerequisites
 
-- Python 3.9 or higher
+- Python 3.11 or higher recommended
 - Access to a Kubernetes cluster (with kubectl configured)
 - Access to a Consul cluster (optional for Consul features)
 - OpenAI API key
+
+> macOS note: avoid the Apple Command Line Tools Python for this project. It may be linked against LibreSSL, which triggers `urllib3` warnings. Use a Homebrew Python 3.11+ interpreter instead.
 
 ### Installation
 
@@ -40,14 +42,21 @@ An AI-powered agent built with LangChain and OpenAI GPT-4 to help troubleshoot K
 cd k8s-consul-troubleshooting-agent
 ```
 
-2. **Create and activate virtual environment:**
+2. **Install a supported Python on macOS (recommended):**
 ```bash
-python3 -m venv venv
+brew install python@3.11
+/opt/homebrew/bin/python3.11 -c "import ssl,sys; print(sys.version); print(ssl.OPENSSL_VERSION)"
+```
+
+3. **Create and activate virtual environment:**
+```bash
+/opt/homebrew/bin/python3.11 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. **Install dependencies:**
+4. **Install dependencies:**
 ```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 

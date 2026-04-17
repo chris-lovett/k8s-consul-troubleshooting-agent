@@ -5,10 +5,12 @@ Get up and running with the Kubernetes & Consul Troubleshooting Agent in 5 minut
 ## Prerequisites Check
 
 Before starting, ensure you have:
-- ✅ Python 3.9+ installed (`python3 --version`)
+- ✅ Python 3.11+ installed (`python3 --version`)
 - ✅ Access to a Kubernetes cluster (`kubectl cluster-info`)
 - ✅ OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
 - ⚠️ Optional: Access to Consul cluster (for Consul features)
+
+> macOS note: prefer Homebrew Python over the Apple Command Line Tools Python. The system Python may use LibreSSL and trigger `urllib3` startup warnings.
 
 ## Step 1: Setup (2 minutes)
 
@@ -16,13 +18,17 @@ Before starting, ensure you have:
 # Navigate to the project directory
 cd k8s-consul-troubleshooting-agent
 
+# Install a supported Python on macOS
+brew install python@3.11
+
 # Create virtual environment
-python3 -m venv venv
+/opt/homebrew/bin/python3.11 -m venv venv
 
 # Activate virtual environment
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 

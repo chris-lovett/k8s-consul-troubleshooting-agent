@@ -79,7 +79,9 @@ class TroubleshootingAgent:
             agent=self.agent,
             tools=self.tools,
             verbose=verbose,
-            max_iterations=10,
+            max_iterations=20,
+            max_execution_time=120,
+            early_stopping_method="generate",
             handle_parsing_errors=True
         )
     
