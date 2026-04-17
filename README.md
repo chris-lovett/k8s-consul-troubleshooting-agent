@@ -55,6 +55,7 @@ pip install -r requirements.txt
 ```bash
 cp .env.example .env
 # Edit .env and add your OpenAI API key and other settings
+# Default model: gpt-4o-mini
 ```
 
 Required environment variables:
@@ -66,11 +67,52 @@ K8S_NAMESPACE=default  # Optional
 
 Optional Consul environment variables:
 ```bash
-CONSUL_HTTP_TOKEN=                    # Recommended for ACL-enabled Consul clusters
-CONSUL_HTTP_SSL=false                 # Set to true for HTTPS
-CONSUL_HTTP_SSL_VERIFY=true           # Set to false for local troubleshooting with self-signed certs
-CONSUL_CACERT=/path/to/consul-ca.pem  # Preferred for HTTPS with a private CA
+CONSUL_HTTP_TOKEN=                             # Recommended for ACL-enabled Consul clusters
+CONSUL_HTTP_SSL=false                          # Set to true for HTTPS
+CONSUL_HTTP_SSL_VERIFY=true                    # Keep enabled when using a trusted CA bundle
+CONSUL_CACERT=/path/to/consul-ca.pem           # Preferred for HTTPS with a private CA
 ```
+
+### Consul HTTPS Setup
+
+For production-like use, prefer a verified HTTPS configuration over `CONSUL_HTTP_SSL_VERIFY=false`.
+
+Recommended workflow for Kubernetes / OpenShift deployments:
+1. Extract the active Consul CA certificate from the running cluster:
+```bash
+kubectl get secret -n consul consul-ca-cert -o jsonpath='{.data.tls\.crt}' | base64 --decode > consul-ca-from-cluster.pem
+```
+
+2. Verify the HTTPS listener using that CA bundle:
+```bash
+openssl s_client \
+  -connect 127.0.0.1:8501 \
+  -CAfile ./consul-ca-from-cluster.pem \
+  </dev/null
+```
+
+3. Confirm OpenSSL reports:
+```text
+Verify return code: 0 (ok)
+```
+
+4. Configure the agent to use the verified CA:
+```bash
+export CONSUL_HTTP_ADDR=127.0.0.1:8501
+export CONSUL_HTTP_SSL=true
+unset CONSUL_HTTP_SSL_VERIFY
+export CONSUL_CACERT=$(pwd)/consul-ca-from-cluster.pem
+export CONSUL_HTTP_TOKEN=<consul-token-secret-id>
+```
+
+Lessons learned:
+- Use the CA extracted from the running cluster, not an older local copy.
+- `CONSUL_HTTP_ADDR` must be `host:port` without `http://` or `https://`.
+- The built-in Consul CA can be correct, but the local PEM must match the active cluster CA exactly.
+- OpenShift/AWS only matter if TLS is terminated before Consul. If the presented certificate is `server.dc1.consul`, you are talking directly to Consul's HTTPS listener.
+- Avoid `CONSUL_HTTP_SSL_VERIFY=false` except for short-lived local debugging.
+
+Do not commit extracted CA files into git. Keep them local and ignored.
 
 ### Running the Agent
 

@@ -20,9 +20,9 @@ class TroubleshootingAgent:
     AI agent for troubleshooting Kubernetes and Consul service mesh issues.
     """
     
-    def __init__(self, 
+    def __init__(self,
                  openai_api_key: Optional[str] = None,
-                 model: str = "gpt-4-turbo-preview",
+                 model: str = "gpt-4o-mini",
                  temperature: float = 0.1,
                  k8s_namespace: str = "default",
                  consul_host: str = "localhost",
@@ -253,7 +253,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description="Kubernetes & Consul Troubleshooting Agent")
-    parser.add_argument("--model", default="gpt-4-turbo-preview", help="OpenAI model to use")
+    parser.add_argument("--model", default="gpt-4o-mini", help="OpenAI model to use")
     parser.add_argument("--namespace", default="default", help="Default Kubernetes namespace")
     parser.add_argument("--consul-host", default="localhost", help="Consul server host")
     parser.add_argument("--consul-port", type=int, default=8500, help="Consul server port")

@@ -34,6 +34,7 @@ cp .env.example .env
 
 # Edit .env and add your OpenAI API key
 # You can use any text editor
+# Default model: gpt-4o-mini
 nano .env  # or vim, code, etc.
 ```
 
@@ -46,15 +47,28 @@ If you want to use Consul features in an ACL-enabled cluster, also configure:
 ```bash
 CONSUL_HTTP_ADDR=127.0.0.1:8501
 CONSUL_HTTP_SSL=true
-CONSUL_HTTP_SSL_VERIFY=false   # for local troubleshooting only
 CONSUL_HTTP_TOKEN=<consul-token-secret-id>
 ```
 
-If your Consul cluster uses a private CA, prefer:
+For verified HTTPS on Kubernetes / OpenShift, extract the active CA from the running cluster:
 ```bash
-CONSUL_CACERT=/path/to/consul-ca.pem
+kubectl get secret -n consul consul-ca-cert -o jsonpath='{.data.tls\.crt}' | base64 --decode > consul-ca-from-cluster.pem
 ```
-instead of disabling TLS verification.
+
+Validate the HTTPS listener:
+```bash
+openssl s_client \
+  -connect 127.0.0.1:8501 \
+  -CAfile ./consul-ca-from-cluster.pem \
+  </dev/null
+```
+
+If OpenSSL reports `Verify return code: 0 (ok)`, configure:
+```bash
+CONSUL_CACERT=/full/path/to/consul-ca-from-cluster.pem
+```
+
+Use `CONSUL_HTTP_SSL_VERIFY=false` only for short-lived local debugging.
 
 ## Step 3: Run (30 seconds)
 
@@ -166,8 +180,20 @@ CONSUL_HTTP_TOKEN=<token>
 Important:
 - Use `host:port` format for `CONSUL_HTTP_ADDR`
 - Do not include `http://` or `https://`
-- For self-signed TLS during local testing, set `CONSUL_HTTP_SSL_VERIFY=false`
-- For production-like setups, use `CONSUL_CACERT=/path/to/consul-ca.pem`
+- Prefer `CONSUL_CACERT` over disabling TLS verification
+- On Kubernetes / OpenShift, extract the active CA from the cluster secret instead of relying on an older local copy:
+```bash
+kubectl get secret -n consul consul-ca-cert -o jsonpath='{.data.tls\.crt}' | base64 --decode > consul-ca-from-cluster.pem
+```
+- Validate the CA bundle before using it:
+```bash
+openssl s_client \
+  -connect 127.0.0.1:8501 \
+  -CAfile ./consul-ca-from-cluster.pem \
+  </dev/null
+```
+- `Verify return code: 0 (ok)` confirms the CA matches the running HTTPS listener
+- Use `CONSUL_HTTP_SSL_VERIFY=false` only for short-lived local debugging
 
 ### Issue: "Permission denied: anonymous token lacks permission"
 **Solution:** Create a dedicated Consul ACL policy and token for the agent:
