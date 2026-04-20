@@ -2,11 +2,25 @@
 
 ## 🎉 Phase 1 Complete! Phase 2 Nearly Complete!
 
-You now have a fully functional AI-powered troubleshooting agent for Kubernetes and HashiCorp Consul service mesh with **conversation memory**, **intelligent error pattern recognition**, **fast-path intent routing**, AND **session-scoped caching**!
+You now have a fully functional AI-powered troubleshooting agent for Kubernetes and HashiCorp Consul service mesh with **conversation memory**, **intelligent error pattern recognition**, **fast-path intent routing**, **session-scoped caching**, AND **Consul Connect sidecar proxy diagnostics**!
 
-### 🆕 Latest Update: Session-Scoped Caching (Phase 2.4) 🚀
+### 🆕 Latest Update: Consul Connect Sidecar Proxy Diagnostics (Phase 2.5) 🚀
 
-The agent now includes **intelligent session-scoped caching** for lightning-fast repeated queries:
+The agent now includes **comprehensive Consul Connect sidecar proxy diagnostics** for deep Envoy troubleshooting:
+- 🔍 **8 Diagnostic Tools**: Proxy status, health, mTLS, upstreams, metrics, config, logs, version
+- 🎯 **8 New Error Patterns**: Instant diagnosis of common proxy issues
+- ⚡ **6 New Intent Types**: Fast-path routing for proxy diagnostics
+- 📊 **Envoy Admin Interface**: Direct access to proxy internals
+- 🔐 **mTLS Validation**: Certificate inspection and troubleshooting
+- 🔗 **Upstream Analysis**: Connection and health verification
+- 📈 **Metrics & Stats**: Performance monitoring and analysis
+- 🧪 **30+ Tests**: Comprehensive test coverage
+
+📖 **[Read the Consul Connect documentation](CONSUL_CONNECT_FEATURE.md)** for complete details.
+
+### Phase 2.4: Session-Scoped Caching ✅
+
+The agent includes **intelligent session-scoped caching** for lightning-fast repeated queries:
 - ⚡ **95-99% Faster**: Cached results return instantly without API calls
 - 🎯 **Smart TTL**: Different cache lifetimes for different data types
 - 💾 **Memory Efficient**: LRU eviction keeps memory usage bounded
@@ -245,15 +259,27 @@ Lightning-fast repeated queries with intelligent caching:
 - Transparent operation with zero configuration
 - See [SESSION_CACHE_FEATURE.md](SESSION_CACHE_FEATURE.md)
 
-## Next Steps: Phase 3
+### 5. Consul Connect Sidecar Proxy Diagnostics ✅ COMPLETE
+Comprehensive Envoy proxy troubleshooting and monitoring:
+- 8 diagnostic tools (status, health, mTLS, upstreams, metrics, config, logs, version)
+- 8 new error patterns for common proxy issues
+- 6 new intent types for fast-path proxy diagnostics
+- Direct Envoy admin interface access
+- mTLS certificate validation and troubleshooting
+- Upstream connectivity analysis
+- Performance metrics and statistics
+- 30+ comprehensive test cases
+- See [CONSUL_CONNECT_FEATURE.md](CONSUL_CONNECT_FEATURE.md)
+
+## Next Steps: Phase 2.6 & Phase 3
 
 Ready for more enhancements? Here's what's next:
 
-### 1. Enhanced Consul Connect Support
-- Sidecar proxy diagnostics
-- mTLS certificate validation
-- Traffic routing analysis
-- Upstream service verification
+### Phase 2.6: Advanced Service-to-Service Communication Analysis
+- Traffic flow visualization
+- End-to-end request tracing
+- Service dependency mapping
+- Communication pattern analysis
 
 ### 2. Add Metrics and Observability
 - Track troubleshooting sessions
@@ -395,18 +421,24 @@ Want to extend the agent? Consider:
 - ✅ Conversation memory with context retention
 - ✅ Interactive memory management commands
 - ✅ Error pattern recognition system
-- ✅ 15+ common error patterns (K8s + Consul)
+- ✅ 23+ common error patterns (K8s + Consul + Proxy)
 - ✅ Intelligent pattern matching with relevance scoring
 - ✅ Intent classification and direct routing
-- ✅ 15+ intent types with 85%+ confidence
+- ✅ 21+ intent types with 85%+ confidence
 - ✅ 50-88% faster response times for common issues
 - ✅ Entity extraction and parameter resolution
 - ✅ Session-scoped caching with smart TTL
 - ✅ 95-99% faster repeated queries with cache
 - ✅ LRU eviction and memory management
 - ✅ Cache statistics and monitoring
-- ✅ Comprehensive test suite (200+ tests total)
-- ✅ Pattern-first, intent-first, and cache-first troubleshooting
+- ✅ Consul Connect sidecar proxy diagnostics
+- ✅ 8 comprehensive proxy diagnostic tools
+- ✅ Envoy admin interface integration
+- ✅ mTLS certificate validation
+- ✅ Upstream connectivity analysis
+- ✅ Proxy metrics and performance monitoring
+- ✅ Comprehensive test suite (230+ tests total)
+- ✅ Pattern-first, intent-first, cache-first, and proxy-aware troubleshooting
 - ✅ Detailed documentation for all features
 
 ## Conclusion
@@ -426,6 +458,7 @@ You've successfully built a production-ready AI troubleshooting agent! 🎉
 - Tools and intents can be extended infinitely
 - Fast-path routing makes common issues lightning fast
 - Session caching makes repeated queries instant
+- Proxy diagnostics provide deep Envoy visibility
 - LangChain ecosystem is constantly evolving
 
 ---
@@ -439,4 +472,5 @@ For questions or improvements, refer to:
 - [ERROR_PATTERN_RECOGNITION.md](ERROR_PATTERN_RECOGNITION.md) for error patterns
 - [INTENT_ROUTING_FEATURE.md](INTENT_ROUTING_FEATURE.md) for intent routing
 - [SESSION_CACHE_FEATURE.md](SESSION_CACHE_FEATURE.md) for session caching
+- [CONSUL_CONNECT_FEATURE.md](CONSUL_CONNECT_FEATURE.md) for proxy diagnostics
 - [examples/troubleshooting_scenarios.md](examples/troubleshooting_scenarios.md) for use cases

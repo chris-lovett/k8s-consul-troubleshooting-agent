@@ -597,7 +597,320 @@ CONSUL_PATTERNS = [
         ],
         severity="critical",
         keywords=["leader", "quorum", "raft", "cluster", "election"],
-        related_patterns=[]
+    ),
+    
+    # Consul Connect Sidecar Proxy Patterns (Phase 2.5)
+    ErrorPattern(
+        id="consul-proxy-not-ready",
+        name="Sidecar Proxy Not Ready",
+        category="consul",
+        subcategory="sidecar-proxy",
+        patterns=[
+            r"consul-connect-envoy-sidecar.*not ready",
+            r"sidecar.*waiting",
+            r"envoy.*not running",
+            r"proxy container.*crashloopbackoff",
+            r"sidecar.*failed to start"
+        ],
+        symptoms=[
+            "Sidecar proxy container not ready",
+            "Pod stuck in ContainerCreating or Running but not Ready",
+            "Envoy container repeatedly crashing",
+            "Service mesh communication failing"
+        ],
+        root_causes=[
+            "Envoy binary not found or incompatible",
+            "Consul agent not reachable",
+            "Invalid proxy configuration",
+            "Missing or invalid bootstrap config",
+            "Resource constraints (CPU/memory)",
+            "Envoy version incompatible with Consul version"
+        ],
+        solutions=[
+            "Check proxy container logs: kubectl logs <pod> -c consul-connect-envoy-sidecar",
+            "Verify Consul Connect injection: check consul.hashicorp.com/connect-inject annotation",
+            "Check Envoy version compatibility with Consul version",
+            "Verify Consul agent connectivity from pod",
+            "Review resource limits for sidecar container",
+            "Check bootstrap configuration in pod",
+            "Ensure proper RBAC permissions for service account"
+        ],
+        severity="critical",
+        keywords=["sidecar", "envoy", "proxy", "not ready", "crashloop"],
+        related_patterns=["consul-connect-fail", "k8s-crashloop"]
+    ),
+    
+    ErrorPattern(
+        id="consul-proxy-upstream-fail",
+        name="Envoy Upstream Connection Failure",
+        category="consul",
+        subcategory="sidecar-proxy",
+        patterns=[
+            r"upstream connect error",
+            r"no healthy upstream",
+            r"upstream_cx_connect_fail",
+            r"503.*upstream",
+            r"UNAVAILABLE.*upstream"
+        ],
+        symptoms=[
+            "503 Service Unavailable errors",
+            "Upstream connection failures in Envoy logs",
+            "Service-to-service calls timing out",
+            "High upstream_cx_connect_fail metrics"
+        ],
+        root_causes=[
+            "Upstream service not registered in Consul",
+            "Upstream service instances all unhealthy",
+            "Intention blocking traffic",
+            "Incorrect upstream configuration",
+            "Network connectivity issues",
+            "Upstream service not listening on expected port"
+        ],
+        solutions=[
+            "Check Envoy clusters: kubectl exec <pod> -c consul-connect-envoy-sidecar -- curl localhost:19000/clusters",
+            "Verify upstream service health in Consul",
+            "Check intentions allow traffic: consul intention check <source> <dest>",
+            "Review upstream configuration in annotations",
+            "Test network connectivity to upstream",
+            "Check Envoy stats: curl localhost:19000/stats | grep upstream",
+            "Verify upstream service registration"
+        ],
+        severity="high",
+        keywords=["upstream", "503", "unavailable", "connection", "envoy"],
+        related_patterns=["consul-connect-fail", "consul-health", "consul-intention"]
+    ),
+    
+    ErrorPattern(
+        id="consul-proxy-mtls-fail",
+        name="Envoy mTLS Handshake Failure",
+        category="consul",
+        subcategory="sidecar-proxy",
+        patterns=[
+            r"TLS.*handshake.*failed",
+            r"ssl.*connection.*error",
+            r"certificate.*verification.*failed",
+            r"ssl\.fail_verify_error",
+            r"x509.*certificate.*invalid"
+        ],
+        symptoms=[
+            "TLS handshake failures in Envoy logs",
+            "SSL connection errors",
+            "Certificate verification failures",
+            "Intermittent connection issues"
+        ],
+        root_causes=[
+            "Certificate expired or not yet valid",
+            "CA certificate mismatch",
+            "Certificate not properly rotated",
+            "Clock skew between services",
+            "Certificate chain incomplete",
+            "Wrong certificate loaded by Envoy"
+        ],
+        solutions=[
+            "Check certificate expiry: kubectl exec <pod> -c consul-connect-envoy-sidecar -- openssl x509 -in /consul/connect-inject/service.crt -noout -dates",
+            "Verify certificates via Envoy admin: curl localhost:19000/certs",
+            "Check system time synchronization",
+            "Review Consul CA configuration",
+            "Force certificate rotation if needed",
+            "Check Envoy TLS stats: curl localhost:19000/stats | grep ssl",
+            "Verify certificate chain is complete"
+        ],
+        severity="critical",
+        keywords=["mtls", "tls", "ssl", "certificate", "handshake", "x509"],
+        related_patterns=["consul-mtls", "consul-connect-fail"]
+    ),
+    
+    ErrorPattern(
+        id="consul-proxy-config-error",
+        name="Envoy Configuration Error",
+        category="consul",
+        subcategory="sidecar-proxy",
+        patterns=[
+            r"config.*rejected",
+            r"invalid.*configuration",
+            r"listener.*error",
+            r"cluster.*not found",
+            r"route.*configuration.*invalid"
+        ],
+        symptoms=[
+            "Envoy rejecting configuration updates",
+            "Listeners or clusters not configured",
+            "Routing not working as expected",
+            "Configuration errors in Envoy logs"
+        ],
+        root_causes=[
+            "Invalid Consul service definition",
+            "Incompatible Envoy version",
+            "Malformed upstream configuration",
+            "Conflicting listener ports",
+            "Invalid protocol configuration",
+            "Consul agent providing bad config"
+        ],
+        solutions=[
+            "Check Envoy config dump: kubectl exec <pod> -c consul-connect-envoy-sidecar -- curl localhost:19000/config_dump",
+            "Review service definition in Consul",
+            "Verify Envoy version compatibility",
+            "Check for port conflicts",
+            "Review protocol settings (http, tcp, grpc)",
+            "Check Consul agent logs for xDS errors",
+            "Validate upstream annotations syntax"
+        ],
+        severity="high",
+        keywords=["config", "configuration", "listener", "cluster", "route", "invalid"],
+        related_patterns=["consul-proxy-not-ready", "consul-registration"]
+    ),
+    
+    ErrorPattern(
+        id="consul-proxy-timeout",
+        name="Envoy Request Timeout",
+        category="consul",
+        subcategory="sidecar-proxy",
+        patterns=[
+            r"upstream.*timeout",
+            r"request.*timeout",
+            r"upstream_rq_timeout",
+            r"504.*Gateway Timeout",
+            r"deadline exceeded"
+        ],
+        symptoms=[
+            "504 Gateway Timeout errors",
+            "Requests timing out",
+            "High upstream_rq_timeout metrics",
+            "Slow response times"
+        ],
+        root_causes=[
+            "Upstream service responding slowly",
+            "Timeout configuration too short",
+            "Network latency issues",
+            "Upstream service overloaded",
+            "Resource constraints on upstream",
+            "Inefficient application code"
+        ],
+        solutions=[
+            "Check Envoy timeout stats: curl localhost:19000/stats | grep timeout",
+            "Review timeout configuration in service definition",
+            "Increase timeout values if appropriate",
+            "Check upstream service performance",
+            "Review upstream service logs for slow queries",
+            "Monitor upstream resource usage",
+            "Consider implementing circuit breakers"
+        ],
+        severity="medium",
+        keywords=["timeout", "504", "deadline", "slow", "latency"],
+        related_patterns=["consul-proxy-upstream-fail", "consul-health"]
+    ),
+    
+    ErrorPattern(
+        id="consul-proxy-resource",
+        name="Envoy Resource Exhaustion",
+        category="consul",
+        subcategory="sidecar-proxy",
+        patterns=[
+            r"out of memory",
+            r"OOMKilled.*envoy",
+            r"too many open files",
+            r"connection.*limit.*exceeded",
+            r"listener.*overflow"
+        ],
+        symptoms=[
+            "Envoy container OOMKilled",
+            "Connection limit errors",
+            "File descriptor exhaustion",
+            "Proxy performance degradation"
+        ],
+        root_causes=[
+            "Insufficient memory limits",
+            "Connection leak",
+            "Too many concurrent connections",
+            "File descriptor limit too low",
+            "Memory leak in Envoy",
+            "Inadequate resource allocation"
+        ],
+        solutions=[
+            "Increase memory limits for sidecar container",
+            "Check connection stats: curl localhost:19000/stats | grep cx",
+            "Review connection pooling settings",
+            "Increase file descriptor limits",
+            "Monitor Envoy memory usage over time",
+            "Check for connection leaks in application",
+            "Consider upgrading Envoy version if memory leak suspected"
+        ],
+        severity="high",
+        keywords=["oom", "memory", "resource", "limit", "exhaustion"],
+        related_patterns=["k8s-oom", "consul-proxy-not-ready"]
+    ),
+    
+    ErrorPattern(
+        id="consul-proxy-metrics-fail",
+        name="Envoy Metrics/Stats Issues",
+        category="consul",
+        subcategory="sidecar-proxy",
+        patterns=[
+            r"stats.*unavailable",
+            r"admin.*interface.*error",
+            r"metrics.*endpoint.*failed",
+            r"prometheus.*scrape.*failed"
+        ],
+        symptoms=[
+            "Cannot access Envoy admin interface",
+            "Metrics not being collected",
+            "Prometheus scrape failures",
+            "Monitoring gaps"
+        ],
+        root_causes=[
+            "Admin port not accessible",
+            "Network policy blocking admin port",
+            "Envoy admin interface disabled",
+            "Port conflict on admin port",
+            "RBAC restrictions"
+        ],
+        solutions=[
+            "Verify admin port (default 19000) is accessible",
+            "Check network policies allow admin port access",
+            "Test admin interface: kubectl exec <pod> -c consul-connect-envoy-sidecar -- curl localhost:19000/stats",
+            "Review Envoy bootstrap config for admin settings",
+            "Check for port conflicts",
+            "Verify monitoring service account permissions"
+        ],
+        severity="low",
+        keywords=["metrics", "stats", "admin", "prometheus", "monitoring"],
+        related_patterns=["consul-proxy-config-error"]
+    ),
+    
+    ErrorPattern(
+        id="consul-proxy-version-mismatch",
+        name="Envoy Version Incompatibility",
+        category="consul",
+        subcategory="sidecar-proxy",
+        patterns=[
+            r"unsupported.*version",
+            r"version.*mismatch",
+            r"incompatible.*envoy",
+            r"API.*version.*not supported"
+        ],
+        symptoms=[
+            "Proxy failing to start",
+            "Configuration rejected",
+            "Unexpected behavior",
+            "Feature not working"
+        ],
+        root_causes=[
+            "Envoy version too old for Consul version",
+            "Envoy version too new for Consul version",
+            "Using deprecated Envoy APIs",
+            "Feature requires newer Envoy version"
+        ],
+        solutions=[
+            "Check Envoy version: kubectl exec <pod> -c consul-connect-envoy-sidecar -- envoy --version",
+            "Verify Consul version compatibility matrix",
+            "Upgrade/downgrade Envoy to compatible version",
+            "Review Consul release notes for Envoy requirements",
+            "Update sidecar injector image to use correct Envoy version",
+            "Check Consul documentation for supported Envoy versions"
+        ],
+        severity="high",
+        keywords=["version", "compatibility", "mismatch", "unsupported"],
+        related_patterns=["consul-proxy-not-ready", "consul-proxy-config-error"]
     ),
 ]
 

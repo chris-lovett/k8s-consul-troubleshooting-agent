@@ -33,6 +33,14 @@ class IntentType(Enum):
     CONSUL_CONNECT_ISSUE = "consul_connect_issue"
     CONSUL_REGISTRATION = "consul_registration"
     
+    # Consul Connect Sidecar Proxy intents (Phase 2.5)
+    PROXY_STATUS_CHECK = "proxy_status_check"
+    PROXY_HEALTH_CHECK = "proxy_health_check"
+    PROXY_MTLS_ISSUE = "proxy_mtls_issue"
+    PROXY_UPSTREAM_ISSUE = "proxy_upstream_issue"
+    PROXY_CONFIG_ISSUE = "proxy_config_issue"
+    PROXY_METRICS_CHECK = "proxy_metrics_check"
+    
     # Error pattern intents
     ERROR_PATTERN_MATCH = "error_pattern_match"
     KNOWN_ERROR_DIAGNOSIS = "known_error_diagnosis"
@@ -223,6 +231,86 @@ class IntentClassifier:
                     ],
                     "confidence": 0.9,
                     "priority": 1
+                }
+            ],
+            # Consul Connect Sidecar Proxy Intents (Phase 2.5)
+            IntentType.PROXY_STATUS_CHECK: [
+                {
+                    "patterns": [
+                        r"(?:check|show|get) (?:sidecar )?proxy status",
+                        r"(?:is )?(?:the )?(?:sidecar )?proxy (?:running|up|healthy)",
+                        r"envoy (?:sidecar )?(?:status|health)",
+                        r"consul-connect-envoy-sidecar (?:status|health)",
+                        r"sidecar container (?:status|health|ready)",
+                    ],
+                    "confidence": 0.95,
+                    "priority": 1
+                }
+            ],
+            IntentType.PROXY_HEALTH_CHECK: [
+                {
+                    "patterns": [
+                        r"envoy (?:admin|health) (?:interface|endpoint)",
+                        r"(?:check|verify) envoy health",
+                        r"proxy health check",
+                        r"envoy readiness",
+                        r"proxy admin interface",
+                    ],
+                    "confidence": 0.9,
+                    "priority": 1
+                }
+            ],
+            IntentType.PROXY_MTLS_ISSUE: [
+                {
+                    "patterns": [
+                        r"(?:mtls|tls|ssl|certificate) (?:issue|problem|error|failed)",
+                        r"certificate (?:expired|invalid|verification failed)",
+                        r"tls handshake (?:failed|error)",
+                        r"x509 (?:certificate|error)",
+                        r"(?:check|verify) (?:proxy )?certificates",
+                    ],
+                    "confidence": 0.95,
+                    "priority": 1
+                }
+            ],
+            IntentType.PROXY_UPSTREAM_ISSUE: [
+                {
+                    "patterns": [
+                        r"upstream (?:connect|connection) (?:error|failed|issue)",
+                        r"no healthy upstream",
+                        r"503 (?:error|service unavailable)",
+                        r"(?:can't|cannot) (?:connect to|reach) upstream",
+                        r"upstream (?:service )?(?:not available|unavailable)",
+                        r"envoy upstream (?:issue|problem|error)",
+                    ],
+                    "confidence": 0.95,
+                    "priority": 1
+                }
+            ],
+            IntentType.PROXY_CONFIG_ISSUE: [
+                {
+                    "patterns": [
+                        r"(?:envoy|proxy) config(?:uration)? (?:issue|problem|error)",
+                        r"(?:listener|cluster|route) (?:not found|error|invalid)",
+                        r"(?:check|inspect|show) (?:envoy|proxy) config",
+                        r"config(?:uration)? (?:rejected|invalid)",
+                        r"envoy (?:listener|cluster|route)",
+                    ],
+                    "confidence": 0.9,
+                    "priority": 1
+                }
+            ],
+            IntentType.PROXY_METRICS_CHECK: [
+                {
+                    "patterns": [
+                        r"(?:envoy|proxy) (?:metrics|stats|statistics)",
+                        r"(?:check|show|get) proxy (?:metrics|stats)",
+                        r"envoy admin stats",
+                        r"proxy (?:performance|connection) (?:metrics|stats)",
+                        r"upstream_(?:cx|rq)_",
+                    ],
+                    "confidence": 0.9,
+                    "priority": 2
                 }
             ],
             IntentType.ERROR_PATTERN_MATCH: [
