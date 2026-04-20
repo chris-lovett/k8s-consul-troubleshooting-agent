@@ -43,14 +43,14 @@ python src/agent.py --max-iterations 50 --max-time 600
 ### Default Behavior (Recommended)
 Simply use the agent normally - the new defaults handle most complex scenarios:
 ```bash
-python src/agent.py
+python -m src.agent
 ```
 
 ### Custom Limits for Very Complex Scenarios
 For extremely complex multi-service investigations:
 ```bash
 # Allow up to 50 tool calls and 10 minutes
-python src/agent.py --max-iterations 50 --max-time 600
+python -m src.agent --max-iterations 50 --max-time 600
 ```
 
 ### Programmatic Usage
@@ -192,10 +192,10 @@ The agent gracefully handles limit scenarios and provides useful partial informa
 ### Test Complex Scenarios
 ```bash
 # Test with a complex multi-step issue
-python src/agent.py --query "Why is my pod stuck in pending and how do I fix it?"
+python -m src.agent --query "Why is my pod stuck in pending and how do I fix it?"
 
 # Test with verbose mode to see all tool calls
-python src/agent.py --verbose --query "Investigate service communication between web and api"
+python -m src.agent --verbose --query "Investigate service communication between web and api"
 ```
 
 ### Monitor Execution

@@ -82,7 +82,7 @@ When the agent receives "are all my pods healthy?", it should now:
 ## Testing
 
 ### Manual Testing
-1. Start the agent: `python src/agent.py`
+1. Start the agent: `python -m src.agent`
 2. Ask: "are all my pods healthy?"
 3. Expected: Agent uses `list_pods` tool and shows all pods
 4. Ask: "is pod <specific-pod-name> healthy?"
