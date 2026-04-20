@@ -19,6 +19,7 @@ from langchain_core.messages import BaseMessage
 
 from .tools import KubernetesTools, ConsulTools
 from .prompts.system_prompts import SYSTEM_PROMPT, REACT_PROMPT_TEMPLATE
+from .error_patterns import pattern_matcher, format_pattern_match
 
 
 class TroubleshootingAgent:
@@ -226,6 +227,31 @@ class TroubleshootingAgent:
                 Input: empty string
                 Use this to check cluster health and member status."""
             ),
+            
+            # Error Pattern Recognition tools
+            Tool(
+                name="match_error_pattern",
+                func=self._wrap_tool_activity(
+                    "Analyzing error patterns...",
+                    lambda x: self._match_error_pattern(x)
+                ),
+                description="""Match error messages or logs against known error patterns for instant diagnosis.
+                Input should be: error_text or error_text,category
+                Example: "CrashLoopBackOff" or "ImagePullBackOff,kubernetes"
+                Category can be 'kubernetes' or 'consul' (optional)
+                Use this FIRST when you see error messages or symptoms to get instant solutions."""
+            ),
+            Tool(
+                name="search_error_patterns",
+                func=self._wrap_tool_activity(
+                    "Searching error pattern database...",
+                    lambda x: self._search_error_patterns(x)
+                ),
+                description="""Search the error pattern database by keywords or symptoms.
+                Input should be: search_query
+                Example: "pod crashing" or "connection refused" or "memory"
+                Use this to find relevant error patterns when you know the symptom but not the exact error."""
+            ),
         ]
         
         return tools
@@ -272,6 +298,94 @@ class TroubleshootingAgent:
             return func(*parts)
         except TypeError as e:
             return f"Error: Invalid input format. {str(e)}"
+    
+    def _match_error_pattern(self, input_str: str) -> str:
+        """
+        Match error text against known patterns.
+        
+        Args:
+            input_str: Error text or "error_text,category"
+        
+        Returns:
+            Formatted pattern matches or message if no matches
+        """
+        if not input_str or not input_str.strip():
+            return "Error: Please provide error text to match against patterns."
+        
+        parts = [p.strip() for p in input_str.split(',', 1)]
+        error_text = parts[0]
+        category = parts[1] if len(parts) > 1 else None
+        
+        # Validate category
+        if category and category not in ['kubernetes', 'consul']:
+            return f"Error: Invalid category '{category}'. Use 'kubernetes' or 'consul'."
+        
+        matches = pattern_matcher.match(error_text, category)
+        
+        if not matches:
+            return (
+                "No matching error patterns found in the database. "
+                "This might be a unique issue. Proceed with manual troubleshooting using other tools."
+            )
+        
+        # Format the top matches
+        output = [f"Found {len(matches)} matching error pattern(s):\n"]
+        
+        for i, pattern in enumerate(matches[:3], 1):  # Show top 3 matches
+            output.append(f"\n{'='*70}")
+            output.append(f"Match #{i}: {pattern.name} ({pattern.severity.upper()} severity)")
+            output.append('='*70)
+            output.append(format_pattern_match(pattern))
+        
+        if len(matches) > 3:
+            output.append(f"\n... and {len(matches) - 3} more pattern(s).")
+            output.append("Use search_error_patterns to explore more patterns.")
+        
+        return "\n".join(output)
+    
+    def _search_error_patterns(self, query: str) -> str:
+        """
+        Search error patterns by keywords or symptoms.
+        
+        Args:
+            query: Search query
+        
+        Returns:
+            Formatted search results
+        """
+        if not query or not query.strip():
+            return "Error: Please provide a search query."
+        
+        matches = pattern_matcher.search_patterns(query)
+        
+        if not matches:
+            return (
+                f"No error patterns found matching '{query}'. "
+                "Try different keywords like 'crash', 'connection', 'memory', 'certificate', etc."
+            )
+        
+        # Format search results
+        output = [f"Found {len(matches)} pattern(s) matching '{query}':\n"]
+        
+        for i, pattern in enumerate(matches[:5], 1):  # Show top 5 results
+            output.append(f"\n{i}. {pattern.name} ({pattern.category}/{pattern.subcategory})")
+            output.append(f"   Severity: {pattern.severity.upper()}")
+            output.append(f"   Keywords: {', '.join(pattern.keywords[:5])}")
+            
+            if i <= 2:  # Show full details for top 2
+                output.append(f"\n   Symptoms:")
+                for symptom in pattern.symptoms[:3]:
+                    output.append(f"     • {symptom}")
+                output.append(f"\n   Quick Solutions:")
+                for solution in pattern.solutions[:2]:
+                    output.append(f"     • {solution}")
+        
+        if len(matches) > 5:
+            output.append(f"\n... and {len(matches) - 5} more pattern(s).")
+        
+        output.append("\nUse match_error_pattern with specific error text for detailed diagnosis.")
+        
+        return "\n".join(output)
     
     def _create_agent(self):
         """Create the ReAct agent."""
