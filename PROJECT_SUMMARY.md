@@ -1,12 +1,26 @@
 # Project Summary: Kubernetes & Consul Troubleshooting Agent
 
-## 🎉 Phase 1 Complete! Phase 2 Nearly Complete!
+## 🎉 Phase 1 Complete! Phase 2 Complete!
 
-You now have a fully functional AI-powered troubleshooting agent for Kubernetes and HashiCorp Consul service mesh with **conversation memory**, **intelligent error pattern recognition**, **fast-path intent routing**, **session-scoped caching**, AND **Consul Connect sidecar proxy diagnostics**!
+You now have a fully functional AI-powered troubleshooting agent for Kubernetes and HashiCorp Consul service mesh with **conversation memory**, **intelligent error pattern recognition**, **fast-path intent routing**, **session-scoped caching**, **Consul Connect sidecar proxy diagnostics**, AND **advanced service-to-service communication analysis**!
 
-### 🆕 Latest Update: Consul Connect Sidecar Proxy Diagnostics (Phase 2.5) 🚀
+### 🆕 Latest Update: Advanced Service-to-Service Communication Analysis (Phase 2.6) 🚀
 
-The agent now includes **comprehensive Consul Connect sidecar proxy diagnostics** for deep Envoy troubleshooting:
+The agent now includes **comprehensive service-to-service communication analysis** for deep service mesh troubleshooting:
+- 🗺️ **7 Analysis Tools**: Dependency mapping, request tracing, pattern analysis, traffic flow, multi-hop testing, circular dependency detection
+- 🎯 **5 New Error Patterns**: Instant diagnosis of communication issues
+- ⚡ **6 New Intent Types**: Fast-path routing for communication analysis
+- 🔍 **End-to-End Tracing**: Follow requests through entire service chains
+- 📊 **Dependency Visualization**: Map service relationships and dependencies
+- 🔗 **Multi-Hop Analysis**: Test connectivity across service chains
+- 🔄 **Circular Detection**: Identify problematic circular dependencies
+- 🧪 **40+ Tests**: Comprehensive test coverage
+
+📖 **[Read the Service Communication documentation](SERVICE_COMMUNICATION_FEATURE.md)** for complete details.
+
+### Phase 2.5: Consul Connect Sidecar Proxy Diagnostics ✅
+
+The agent includes **comprehensive Consul Connect sidecar proxy diagnostics** for deep Envoy troubleshooting:
 - 🔍 **8 Diagnostic Tools**: Proxy status, health, mTLS, upstreams, metrics, config, logs, version
 - 🎯 **8 New Error Patterns**: Instant diagnosis of common proxy issues
 - ⚡ **6 New Intent Types**: Fast-path routing for proxy diagnostics

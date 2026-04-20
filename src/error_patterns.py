@@ -912,6 +912,210 @@ CONSUL_PATTERNS = [
         keywords=["version", "compatibility", "mismatch", "unsupported"],
         related_patterns=["consul-proxy-not-ready", "consul-proxy-config-error"]
     ),
+    
+    # Service Communication Patterns (Phase 2.6)
+    ErrorPattern(
+        id="service-comm-chain-failure",
+        name="Multi-Hop Communication Chain Failure",
+        category="consul",
+        subcategory="service-communication",
+        patterns=[
+            r"service chain.*fail",
+            r"multi-hop.*error",
+            r"cascading.*failure",
+            r"downstream.*unavailable",
+            r"request.*failed.*chain"
+        ],
+        symptoms=[
+            "Requests failing through service chain",
+            "Cascading failures across services",
+            "Timeout errors in multi-hop calls",
+            "Partial success in service chain"
+        ],
+        root_causes=[
+            "One service in chain is down",
+            "Cumulative latency exceeds timeout",
+            "Intention missing at one hop",
+            "Proxy issue at intermediate service",
+            "Network partition affecting chain",
+            "Resource exhaustion in chain"
+        ],
+        solutions=[
+            "Trace request path through entire chain",
+            "Check health of each service in chain",
+            "Verify intentions at each hop",
+            "Analyze cumulative latency",
+            "Check for bottlenecks in chain",
+            "Implement circuit breakers",
+            "Add retry logic with backoff",
+            "Consider reducing chain length"
+        ],
+        severity="high",
+        keywords=["chain", "multi-hop", "cascading", "downstream"],
+        related_patterns=["consul-connect-fail", "consul-proxy-upstream-fail"]
+    ),
+    
+    ErrorPattern(
+        id="service-comm-circular-dependency",
+        name="Circular Service Dependency",
+        category="consul",
+        subcategory="service-communication",
+        patterns=[
+            r"circular.*dependency",
+            r"cyclic.*call",
+            r"recursive.*service.*call",
+            r"deadlock.*service",
+            r"infinite.*loop.*service"
+        ],
+        symptoms=[
+            "Services calling each other recursively",
+            "Deadlock situations",
+            "Stack overflow errors",
+            "Infinite request loops",
+            "Deployment ordering issues"
+        ],
+        root_causes=[
+            "Service A calls Service B calls Service A",
+            "Poor service design",
+            "Tight coupling between services",
+            "Shared state management issues",
+            "Event loop creating cycles"
+        ],
+        solutions=[
+            "Map service dependencies to identify cycles",
+            "Refactor to remove circular calls",
+            "Introduce message queue for async communication",
+            "Use event-driven architecture",
+            "Implement shared data service",
+            "Add circuit breakers to break cycles",
+            "Redesign service boundaries"
+        ],
+        severity="critical",
+        keywords=["circular", "cyclic", "recursive", "deadlock", "loop"],
+        related_patterns=["service-comm-chain-failure"]
+    ),
+    
+    ErrorPattern(
+        id="service-comm-high-latency",
+        name="High End-to-End Latency",
+        category="consul",
+        subcategory="service-communication",
+        patterns=[
+            r"high.*latency.*chain",
+            r"slow.*request.*path",
+            r"timeout.*multi.*service",
+            r"cumulative.*latency",
+            r"end-to-end.*slow"
+        ],
+        symptoms=[
+            "Requests taking too long",
+            "Timeouts in service chains",
+            "Poor user experience",
+            "High P99 latency"
+        ],
+        root_causes=[
+            "Too many hops in service chain",
+            "Slow service in the chain",
+            "Network latency between services",
+            "Inefficient data fetching",
+            "Lack of caching",
+            "Synchronous calls where async would work"
+        ],
+        solutions=[
+            "Analyze latency at each hop",
+            "Identify slowest service in chain",
+            "Implement caching at appropriate layers",
+            "Use async communication where possible",
+            "Consolidate services to reduce hops",
+            "Optimize slow services",
+            "Add request timeouts",
+            "Implement parallel calls where possible"
+        ],
+        severity="medium",
+        keywords=["latency", "slow", "timeout", "performance"],
+        related_patterns=["service-comm-chain-failure", "consul-proxy-timeout"]
+    ),
+    
+    ErrorPattern(
+        id="service-comm-dependency-unavailable",
+        name="Critical Dependency Unavailable",
+        category="consul",
+        subcategory="service-communication",
+        patterns=[
+            r"dependency.*unavailable",
+            r"required.*service.*down",
+            r"critical.*service.*fail",
+            r"upstream.*dependency.*error"
+        ],
+        symptoms=[
+            "Service cannot function without dependency",
+            "All requests failing",
+            "Service degraded or down",
+            "Cascading failures"
+        ],
+        root_causes=[
+            "Critical upstream service is down",
+            "No fallback mechanism",
+            "Tight coupling to dependency",
+            "Single point of failure",
+            "No graceful degradation"
+        ],
+        solutions=[
+            "Implement circuit breakers",
+            "Add fallback mechanisms",
+            "Cache responses when possible",
+            "Design for graceful degradation",
+            "Add health checks for dependencies",
+            "Implement retry with exponential backoff",
+            "Consider service redundancy",
+            "Use bulkhead pattern for isolation"
+        ],
+        severity="critical",
+        keywords=["dependency", "unavailable", "critical", "required"],
+        related_patterns=["consul-connect-fail", "service-comm-chain-failure"]
+    ),
+    
+    ErrorPattern(
+        id="service-comm-traffic-bottleneck",
+        name="Service Traffic Bottleneck",
+        category="consul",
+        subcategory="service-communication",
+        patterns=[
+            r"bottleneck.*service",
+            r"overloaded.*service",
+            r"high.*traffic.*service",
+            r"service.*saturated",
+            r"connection.*pool.*exhausted"
+        ],
+        symptoms=[
+            "One service receiving disproportionate traffic",
+            "High latency at specific service",
+            "Connection pool exhaustion",
+            "Resource saturation",
+            "Requests queuing up"
+        ],
+        root_causes=[
+            "Service is critical path for many flows",
+            "Insufficient scaling",
+            "Inefficient implementation",
+            "No load balancing",
+            "Hot spot in data access",
+            "Missing caching layer"
+        ],
+        solutions=[
+            "Identify bottleneck service via metrics",
+            "Scale bottleneck service horizontally",
+            "Implement caching to reduce load",
+            "Optimize service implementation",
+            "Add load balancing",
+            "Consider service sharding",
+            "Implement rate limiting",
+            "Use CDN for static content"
+        ],
+        severity="high",
+        keywords=["bottleneck", "overloaded", "saturated", "traffic"],
+        related_patterns=["service-comm-high-latency", "consul-proxy-resource"]
+    ),
 ]
 
 # Combined pattern database

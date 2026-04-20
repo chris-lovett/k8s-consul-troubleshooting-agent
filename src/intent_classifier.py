@@ -41,6 +41,14 @@ class IntentType(Enum):
     PROXY_CONFIG_ISSUE = "proxy_config_issue"
     PROXY_METRICS_CHECK = "proxy_metrics_check"
     
+    # Service Communication intents (Phase 2.6)
+    SERVICE_DEPENDENCY_MAP = "service_dependency_map"
+    SERVICE_TRACE_PATH = "service_trace_path"
+    SERVICE_COMM_PATTERN = "service_comm_pattern"
+    SERVICE_TRAFFIC_FLOW = "service_traffic_flow"
+    SERVICE_MULTI_HOP_TEST = "service_multi_hop_test"
+    SERVICE_CIRCULAR_DEPENDENCY = "service_circular_dependency"
+    
     # Error pattern intents
     ERROR_PATTERN_MATCH = "error_pattern_match"
     KNOWN_ERROR_DIAGNOSIS = "known_error_diagnosis"
@@ -311,6 +319,85 @@ class IntentClassifier:
                     ],
                     "confidence": 0.9,
                     "priority": 2
+                }
+            ],
+            # Service Communication Intents (Phase 2.6)
+            IntentType.SERVICE_DEPENDENCY_MAP: [
+                {
+                    "patterns": [
+                        r"(?:show|map|visualize|display) (?:service )?dependencies",
+                        r"(?:service|application) dependency (?:map|graph|tree)",
+                        r"what services (?:does|do) .+ (?:call|depend on|use)",
+                        r"(?:list|show) (?:all )?(?:service )?dependencies",
+                        r"dependency (?:map|mapping|graph)",
+                    ],
+                    "confidence": 0.9,
+                    "priority": 2
+                }
+            ],
+            IntentType.SERVICE_TRACE_PATH: [
+                {
+                    "patterns": [
+                        r"trace (?:request|path|route) (?:from|between) .+ (?:to|and) .+",
+                        r"(?:show|display) (?:request|communication) path",
+                        r"how (?:does|do) .+ (?:communicate|talk|connect) (?:with|to) .+",
+                        r"end-to-end (?:path|trace|flow)",
+                        r"request (?:path|flow|trace) (?:from|between)",
+                    ],
+                    "confidence": 0.95,
+                    "priority": 1
+                }
+            ],
+            IntentType.SERVICE_COMM_PATTERN: [
+                {
+                    "patterns": [
+                        r"(?:analyze|show|check) communication pattern",
+                        r"(?:traffic|request) pattern (?:for|of) .+",
+                        r"(?:how|what) (?:is|are) .+ communicating",
+                        r"service .+ (?:traffic|communication) (?:pattern|analysis)",
+                        r"(?:inbound|outbound) (?:traffic|communication)",
+                    ],
+                    "confidence": 0.85,
+                    "priority": 2
+                }
+            ],
+            IntentType.SERVICE_TRAFFIC_FLOW: [
+                {
+                    "patterns": [
+                        r"(?:show|visualize|display) traffic flow",
+                        r"traffic (?:visualization|topology|map)",
+                        r"service mesh (?:topology|visualization|map)",
+                        r"(?:show|display) (?:service )?traffic",
+                        r"(?:bottleneck|high traffic|traffic volume)",
+                    ],
+                    "confidence": 0.85,
+                    "priority": 2
+                }
+            ],
+            IntentType.SERVICE_MULTI_HOP_TEST: [
+                {
+                    "patterns": [
+                        r"test (?:multi-hop|chain|path) (?:connectivity|communication)",
+                        r"(?:verify|check|test) .+ (?:through|via) .+",
+                        r"end-to-end (?:connectivity|test|check)",
+                        r"test (?:service )?chain .+ .+ .+",
+                        r"multi-hop (?:test|check|connectivity)",
+                    ],
+                    "confidence": 0.9,
+                    "priority": 1
+                }
+            ],
+            IntentType.SERVICE_CIRCULAR_DEPENDENCY: [
+                {
+                    "patterns": [
+                        r"circular (?:dependency|dependencies|reference)",
+                        r"(?:detect|find|check) (?:circular|cyclic) (?:dependency|dependencies)",
+                        r"(?:service|services) calling each other",
+                        r"dependency (?:cycle|loop|circle)",
+                        r"recursive (?:service )?(?:call|dependency)",
+                    ],
+                    "confidence": 0.9,
+                    "priority": 1
                 }
             ],
             IntentType.ERROR_PATTERN_MATCH: [
