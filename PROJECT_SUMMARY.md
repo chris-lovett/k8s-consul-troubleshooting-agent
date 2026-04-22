@@ -1,8 +1,12 @@
-# Project Summary: Kubernetes & Consul Troubleshooting Agent
+# Project Summary: meshtrbl - Mesh Troubleshooter
 
 ## 🎉 Phase 1 Complete! Phase 2 Complete! Phase 3 Complete!
 
-You now have a fully functional AI-powered troubleshooting agent for Kubernetes and HashiCorp Consul service mesh with **conversation memory**, **intelligent error pattern recognition**, **fast-path intent routing**, **session-scoped caching**, **Consul Connect sidecar proxy diagnostics**, **advanced service-to-service communication analysis**, AND **LangGraph-based workflow orchestration**!
+You now have a fully functional, professionally packaged AI-powered troubleshooting agent for Kubernetes and HashiCorp Consul service mesh with **conversation memory**, **intelligent error pattern recognition**, **fast-path intent routing**, **session-scoped caching**, **Consul Connect sidecar proxy diagnostics**, **advanced service-to-service communication analysis**, AND **LangGraph-based workflow orchestration**!
+
+**Package Name:** `meshtrbl` (Mesh Troubleshooter)
+**Command:** `meshtrbl`
+**Version:** 3.0.0
 
 ### 🆕 Latest Update: LangGraph Workflow Orchestration (Phase 3) 🚀
 
@@ -16,7 +20,7 @@ The agent now includes **LangGraph-based state machine workflows** for complex t
 - 🚀 **40-60% Faster**: For complex queries compared to sequential agent
 - 🧪 **Comprehensive Tests**: Full test coverage for workflow functionality
 
-📖 **[Read the LangGraph Workflows documentation](PHASE3_LANGGRAPH_WORKFLOWS.md)** for complete details.
+📖 **[Read the LangGraph Workflows documentation](docs/PHASE3_LANGGRAPH_WORKFLOWS.md)** for complete details.
 
 ### Phase 2.6: Advanced Service-to-Service Communication Analysis ✅
 
@@ -30,7 +34,7 @@ The agent now includes **comprehensive service-to-service communication analysis
 - 🔄 **Circular Detection**: Identify problematic circular dependencies
 - 🧪 **40+ Tests**: Comprehensive test coverage
 
-📖 **[Read the Service Communication documentation](SERVICE_COMMUNICATION_FEATURE.md)** for complete details.
+📖 **[Read the Service Communication documentation](docs/SERVICE_COMMUNICATION_FEATURE.md)** for complete details.
 
 ### Phase 2.5: Consul Connect Sidecar Proxy Diagnostics ✅
 
@@ -44,7 +48,7 @@ The agent includes **comprehensive Consul Connect sidecar proxy diagnostics** fo
 - 📈 **Metrics & Stats**: Performance monitoring and analysis
 - 🧪 **30+ Tests**: Comprehensive test coverage
 
-📖 **[Read the Consul Connect documentation](CONSUL_CONNECT_FEATURE.md)** for complete details.
+📖 **[Read the Consul Connect documentation](docs/CONSUL_CONNECT_FEATURE.md)** for complete details.
 
 ### Phase 2.4: Session-Scoped Caching ✅
 
@@ -56,7 +60,7 @@ The agent includes **intelligent session-scoped caching** for lightning-fast rep
 - 🔄 **Automatic**: Works transparently without configuration
 - 🎛️ **Controllable**: Interactive commands to view and manage cache
 
-📖 **[Read the Session Caching documentation](SESSION_CACHE_FEATURE.md)** for complete details.
+📖 **[Read the Session Caching documentation](docs/SESSION_CACHE_FEATURE.md)** for complete details.
 
 ### Phase 2.3: Intent Classification & Direct Routing ✅
 
@@ -67,7 +71,7 @@ The agent includes **intelligent intent classification and fast-path routing** f
 - ⚡ **Direct Routing**: Pre-planned tool sequences bypass LLM reasoning
 - 📊 **Priority-Based**: Critical issues get immediate attention
 
-📖 **[Read the Intent Routing documentation](INTENT_ROUTING_FEATURE.md)** for complete details.
+📖 **[Read the Intent Routing documentation](docs/INTENT_ROUTING_FEATURE.md)** for complete details.
 
 ### Phase 2.2: Error Pattern Recognition ✅
 
@@ -78,7 +82,7 @@ The agent includes **intelligent error pattern recognition** for instant diagnos
 - 🔗 **Related Patterns**: Discover connected issues automatically
 - 📖 **Detailed Guidance**: Each pattern includes symptoms, causes, and step-by-step solutions
 
-📖 **[Read the Error Pattern Recognition documentation](ERROR_PATTERN_RECOGNITION.md)** for complete details.
+📖 **[Read the Error Pattern Recognition documentation](docs/ERROR_PATTERN_RECOGNITION.md)** for complete details.
 
 ### Phase 2.1: Conversation Memory ✅
 
@@ -88,7 +92,7 @@ The agent includes **conversation memory** to maintain context across multiple q
 - ✅ Provides better context-aware responses
 - ✅ Interactive memory management commands (`/clear`, `/history`, `/summary`)
 
-📖 **[Read the Memory Feature documentation](MEMORY_FEATURE.md)** for complete details.
+📖 **[Read the Memory Feature documentation](docs/MEMORY_FEATURE.md)** for complete details.
 
 ## What We Built
 
@@ -143,31 +147,69 @@ The agent includes **conversation memory** to maintain context across multiple q
 
 ```
 meshtrbl/
-├── README.md                          # Comprehensive documentation
-├── QUICKSTART.md                      # 5-minute setup guide
-├── PROJECT_SUMMARY.md                 # This file
+├── README.md                          # Main documentation
+├── PROJECT_SUMMARY.md                 # This file - project overview
 ├── requirements.txt                   # Python dependencies
+├── setup.py                           # Package configuration
+├── pyproject.toml                     # Modern Python packaging
+├── MANIFEST.in                        # Package file inclusion rules
 ├── .env.example                       # Environment template
 ├── .gitignore                         # Git ignore rules
 │
-├── config/
-│   └── agent_config.yaml             # Agent configuration
+├── docs/                              # 📚 All documentation
+│   ├── QUICKSTART.md                  # 5-minute setup guide
+│   ├── INSTALL.md                     # Installation instructions
+│   ├── INSTALL_PHASE3.md              # Phase 3 setup
+│   ├── PACKAGING.md                   # Distribution guide
+│   ├── PHASE3_LANGGRAPH_WORKFLOWS.md  # LangGraph workflows
+│   ├── MEMORY_FEATURE.md              # Conversation memory
+│   ├── ERROR_PATTERN_RECOGNITION.md   # Error patterns
+│   ├── INTENT_ROUTING_FEATURE.md      # Intent classification
+│   ├── SESSION_CACHE_FEATURE.md       # Session caching
+│   ├── CONSUL_CONNECT_FEATURE.md      # Proxy diagnostics
+│   ├── SERVICE_COMMUNICATION_FEATURE.md # Service analysis
+│   ├── EXECUTION_LIMITS_IMPROVEMENT.md
+│   ├── FIX_POD_HEALTH_QUERY.md
+│   ├── GITHUB_SETUP.md
+│   └── OPENAI_API_KEY_SETUP.md
 │
-├── src/
+├── config/
+│   └── agent_config.yaml              # Agent configuration
+│
+├── src/                               # 🐍 Source code
 │   ├── __init__.py
-│   ├── agent.py                      # Main agent implementation
+│   ├── agent.py                       # Main agent implementation
+│   ├── error_patterns.py              # Error pattern database
+│   ├── intent_classifier.py           # Intent classification
+│   ├── session_cache.py               # Session caching
 │   ├── prompts/
-│   │   └── system_prompts.py         # Expert prompts
-│   └── tools/
+│   │   └── system_prompts.py          # Expert prompts
+│   ├── tools/
+│   │   ├── __init__.py
+│   │   ├── kubernetes.py              # K8s inspection tools
+│   │   ├── consul_tools.py            # Consul inspection tools
+│   │   ├── consul_connect.py          # Proxy diagnostics
+│   │   └── service_communication.py   # Service analysis
+│   └── workflows/                     # 🔄 LangGraph workflows
 │       ├── __init__.py
-│       ├── kubernetes.py             # K8s inspection tools
-│       └── consul_tools.py           # Consul inspection tools
+│       └── troubleshooting_graph.py   # State machine workflows
 │
 ├── examples/
-│   └── troubleshooting_scenarios.md  # Usage examples
+│   ├── troubleshooting_scenarios.md   # Usage examples
+│   └── consul-agent-troubleshooter-policy.hcl
 │
-└── tests/
-    └── test_agent.py                 # Basic tests
+└── tests/                             # 🧪 Test suite
+    ├── test_agent.py
+    ├── test_consul_connect.py
+    ├── test_error_patterns.py
+    ├── test_intent_classifier.py
+    ├── test_memory.py
+    ├── test_memory_structure.py
+    ├── test_openai.py
+    ├── test_pod_health_query.py
+    ├── test_service_communication.py
+    ├── test_session_cache.py
+    └── test_workflows.py
 ```
 
 ## Key Features Implemented
@@ -258,7 +300,7 @@ Maintains context across multiple questions in a session:
 - Remembers previous discussions
 - Enables natural follow-up questions
 - Interactive memory management (`/clear`, `/history`, `/summary`)
-- See [MEMORY_FEATURE.md](MEMORY_FEATURE.md)
+- See [docs/MEMORY_FEATURE.md](docs/MEMORY_FEATURE.md)
 
 ### 2. Error Pattern Recognition ✅ COMPLETE
 Intelligent pattern matching for instant diagnosis:
@@ -266,7 +308,7 @@ Intelligent pattern matching for instant diagnosis:
 - Regex-based matching with relevance scoring
 - Instant solutions for known issues
 - Pattern search and discovery
-- See [ERROR_PATTERN_RECOGNITION.md](ERROR_PATTERN_RECOGNITION.md)
+- See [docs/ERROR_PATTERN_RECOGNITION.md](docs/ERROR_PATTERN_RECOGNITION.md)
 
 ### 3. Intent Classification & Direct Routing ✅ COMPLETE
 Fast-path routing for common troubleshooting scenarios:
@@ -275,7 +317,7 @@ Fast-path routing for common troubleshooting scenarios:
 - 50-88% faster response times for common issues
 - Pre-defined optimized troubleshooting flows
 - Automatic fallback to standard agent for complex queries
-- See [INTENT_ROUTING_FEATURE.md](INTENT_ROUTING_FEATURE.md)
+- See [docs/INTENT_ROUTING_FEATURE.md](docs/INTENT_ROUTING_FEATURE.md)
 
 ### 4. Session-Scoped Caching ✅ COMPLETE
 Lightning-fast repeated queries with intelligent caching:
@@ -285,7 +327,7 @@ Lightning-fast repeated queries with intelligent caching:
 - Per-tool statistics and monitoring
 - Interactive cache management (`/cache`, `/clearcache`)
 - Transparent operation with zero configuration
-- See [SESSION_CACHE_FEATURE.md](SESSION_CACHE_FEATURE.md)
+- See [docs/SESSION_CACHE_FEATURE.md](docs/SESSION_CACHE_FEATURE.md)
 
 ### 5. Consul Connect Sidecar Proxy Diagnostics ✅ COMPLETE
 Comprehensive Envoy proxy troubleshooting and monitoring:
@@ -297,7 +339,7 @@ Comprehensive Envoy proxy troubleshooting and monitoring:
 - Upstream connectivity analysis
 - Performance metrics and statistics
 - 30+ comprehensive test cases
-- See [CONSUL_CONNECT_FEATURE.md](CONSUL_CONNECT_FEATURE.md)
+- See [docs/CONSUL_CONNECT_FEATURE.md](docs/CONSUL_CONNECT_FEATURE.md)
 
 ## Phase 3 Completed Features ✅
 
@@ -310,7 +352,7 @@ Advanced state machine workflows for complex troubleshooting:
 - Workflow visualization and execution path tracking
 - 40-60% faster for complex queries vs sequential agent
 - Comprehensive test suite with 15+ test cases
-- See [PHASE3_LANGGRAPH_WORKFLOWS.md](PHASE3_LANGGRAPH_WORKFLOWS.md)
+- See [docs/PHASE3_LANGGRAPH_WORKFLOWS.md](docs/PHASE3_LANGGRAPH_WORKFLOWS.md)
 
 ## Next Steps: Future Enhancements
 
@@ -347,12 +389,12 @@ Ready for more? Here are potential future enhancements:
 
 ### Example 1: Quick Diagnosis
 ```bash
-python -m src.agent --query "Pod web-app-xyz is crashing"
+meshtrbl --query "Pod web-app-xyz is crashing"
 ```
 
 ### Example 2: Interactive Session
 ```bash
-python -m src.agent
+meshtrbl
 
 You: My service can't connect to the database
 Agent: Let me check the Consul intentions...
@@ -361,7 +403,12 @@ Agent: Let me check the Consul intentions...
 
 ### Example 3: Production Namespace
 ```bash
-python -m src.agent --namespace production --verbose
+meshtrbl --namespace production --verbose
+```
+
+### Example 4: Using Workflows (Phase 3)
+```bash
+meshtrbl --use-workflow --query "My service is failing"
 ```
 
 ## Performance Considerations
@@ -474,17 +521,33 @@ Want to extend the agent? Consider:
 - ✅ Comprehensive test suite (230+ tests total)
 - ✅ Pattern-first, intent-first, cache-first, and proxy-aware troubleshooting
 - ✅ Detailed documentation for all features
+- ✅ Professional packaging with setup.py and pyproject.toml
+- ✅ Organized project structure (docs/, tests/, src/)
+- ✅ PyPI-ready distribution
+
+### Phase 3 Achievements:
+- ✅ LangGraph state machine workflows
+- ✅ Parallel tool execution (2-3x faster)
+- ✅ Conditional routing based on issue type
+- ✅ Automated remediation suggestions
+- ✅ Workflow visualization
+- ✅ 40-60% faster for complex queries
+- ✅ Comprehensive test suite (15+ workflow tests)
+- ✅ Graceful fallback to standard agent
+- ✅ Optional workflow dependencies
 
 ## Conclusion
 
-You've successfully built a production-ready AI troubleshooting agent! 🎉
+You've successfully built a production-ready, professionally packaged AI troubleshooting agent! 🎉
 
 **What you can do now:**
-1. Start using it for real troubleshooting
-2. Customize prompts for your environment
-3. Add tools specific to your infrastructure
-4. Monitor cache effectiveness with `/cache` command
-5. Explore LangGraph for Phase 3
+1. Install with `pip install ".[all]"` and use `meshtrbl` command
+2. Start using it for real troubleshooting
+3. Customize prompts for your environment
+4. Add tools specific to your infrastructure
+5. Monitor cache effectiveness with `/cache` command
+6. Use workflows for complex multi-component issues
+7. Distribute via PyPI or internal package repository
 
 **Remember:**
 - This is a learning project - experiment freely!
@@ -493,6 +556,8 @@ You've successfully built a production-ready AI troubleshooting agent! 🎉
 - Fast-path routing makes common issues lightning fast
 - Session caching makes repeated queries instant
 - Proxy diagnostics provide deep Envoy visibility
+- LangGraph workflows handle complex scenarios efficiently
+- Professional packaging makes distribution easy
 - LangChain ecosystem is constantly evolving
 
 ---
@@ -501,10 +566,14 @@ You've successfully built a production-ready AI troubleshooting agent! 🎉
 
 For questions or improvements, refer to:
 - [README.md](README.md) for detailed docs
-- [QUICKSTART.md](QUICKSTART.md) for setup
-- [MEMORY_FEATURE.md](MEMORY_FEATURE.md) for conversation memory
-- [ERROR_PATTERN_RECOGNITION.md](ERROR_PATTERN_RECOGNITION.md) for error patterns
-- [INTENT_ROUTING_FEATURE.md](INTENT_ROUTING_FEATURE.md) for intent routing
-- [SESSION_CACHE_FEATURE.md](SESSION_CACHE_FEATURE.md) for session caching
-- [CONSUL_CONNECT_FEATURE.md](CONSUL_CONNECT_FEATURE.md) for proxy diagnostics
+- [docs/QUICKSTART.md](docs/QUICKSTART.md) for setup
+- [docs/INSTALL.md](docs/INSTALL.md) for installation
+- [docs/PACKAGING.md](docs/PACKAGING.md) for distribution
+- [docs/PHASE3_LANGGRAPH_WORKFLOWS.md](docs/PHASE3_LANGGRAPH_WORKFLOWS.md) for workflows
+- [docs/MEMORY_FEATURE.md](docs/MEMORY_FEATURE.md) for conversation memory
+- [docs/ERROR_PATTERN_RECOGNITION.md](docs/ERROR_PATTERN_RECOGNITION.md) for error patterns
+- [docs/INTENT_ROUTING_FEATURE.md](docs/INTENT_ROUTING_FEATURE.md) for intent routing
+- [docs/SESSION_CACHE_FEATURE.md](docs/SESSION_CACHE_FEATURE.md) for session caching
+- [docs/CONSUL_CONNECT_FEATURE.md](docs/CONSUL_CONNECT_FEATURE.md) for proxy diagnostics
+- [docs/SERVICE_COMMUNICATION_FEATURE.md](docs/SERVICE_COMMUNICATION_FEATURE.md) for service analysis
 - [examples/troubleshooting_scenarios.md](examples/troubleshooting_scenarios.md) for use cases

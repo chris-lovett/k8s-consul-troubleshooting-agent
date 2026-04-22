@@ -33,15 +33,16 @@ An AI-powered troubleshooting agent built with LangChain, LangGraph, and OpenAI 
 
 
 📖 **Documentation:**
-- [Phase 3: LangGraph Workflows](PHASE3_LANGGRAPH_WORKFLOWS.md) 🆕
-- [Conversation Memory Feature](MEMORY_FEATURE.md)
-- [Error Pattern Recognition](ERROR_PATTERN_RECOGNITION.md)
-- [Intent Classification & Routing](INTENT_ROUTING_FEATURE.md)
-- [Session-Scoped Caching](SESSION_CACHE_FEATURE.md)
-- [Consul Connect Diagnostics](CONSUL_CONNECT_FEATURE.md)
-- [Service Communication Analysis](SERVICE_COMMUNICATION_FEATURE.md)
-- [Execution Limits Improvement](EXECUTION_LIMITS_IMPROVEMENT.md)
-- [Pod Health Query Fix](FIX_POD_HEALTH_QUERY.md)
+- [Phase 3: LangGraph Workflows](docs/PHASE3_LANGGRAPH_WORKFLOWS.md) 🆕
+- [Quick Start Guide](docs/QUICKSTART.md)
+- [Installation Guide](docs/INSTALL.md)
+- [Packaging Guide](docs/PACKAGING.md)
+- [Conversation Memory Feature](docs/MEMORY_FEATURE.md)
+- [Error Pattern Recognition](docs/ERROR_PATTERN_RECOGNITION.md)
+- [Intent Classification & Routing](docs/INTENT_ROUTING_FEATURE.md)
+- [Session-Scoped Caching](docs/SESSION_CACHE_FEATURE.md)
+- [Consul Connect Diagnostics](docs/CONSUL_CONNECT_FEATURE.md)
+- [Service Communication Analysis](docs/SERVICE_COMMUNICATION_FEATURE.md)
 
 ## 🚀 Quick Start
 
@@ -168,7 +169,7 @@ This starts an interactive chat session with **conversation memory enabled** by 
 - `/history` - Show full conversation history
 - `/summary` - Show conversation summary
 
-📖 **[Read the full Memory Feature documentation](MEMORY_FEATURE.md)** for detailed usage examples and best practices.
+📖 **[Read the full Memory Feature documentation](docs/MEMORY_FEATURE.md)** for detailed usage examples and best practices.
 
 #### Interactive Mode without Memory
 ```bash

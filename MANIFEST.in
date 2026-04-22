@@ -1,21 +1,15 @@
-# Include documentation files
+# Include main documentation files
 include README.md
 include LICENSE
-include QUICKSTART.md
 include PROJECT_SUMMARY.md
-include PHASE3_LANGGRAPH_WORKFLOWS.md
-include MEMORY_FEATURE.md
-include ERROR_PATTERN_RECOGNITION.md
-include INTENT_ROUTING_FEATURE.md
-include SESSION_CACHE_FEATURE.md
-include CONSUL_CONNECT_FEATURE.md
-include SERVICE_COMMUNICATION_FEATURE.md
-include INSTALL_PHASE3.md
 
 # Include configuration files
 include requirements.txt
 include .env.example
 recursive-include config *.yaml *.yml
+
+# Include documentation directory
+recursive-include docs *.md
 
 # Include examples
 recursive-include examples *.md *.hcl
@@ -34,3 +28,4 @@ recursive-exclude *.egg-info *
 global-exclude *.pyc
 global-exclude *.pyo
 global-exclude .DS_Store
+global-exclude *.pem
