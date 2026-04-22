@@ -22,6 +22,11 @@ from .prompts.system_prompts import SYSTEM_PROMPT, REACT_PROMPT_TEMPLATE
 from .error_patterns import pattern_matcher, format_pattern_match
 from .intent_classifier import intent_classifier, IntentType
 from .session_cache import SessionCache
+from .ux_utils import (
+    RichOutput, ProgressIndicator, ErrorFormatter, ConnectionHealthCheck,
+    HelpFormatter, console, print_header, print_success, print_error,
+    print_warning, print_info
+)
 
 # Optional Phase 3 workflow support
 try:
@@ -908,12 +913,12 @@ class TroubleshootingAgent:
                 intent = intent_classifier.classify(query)
                 
                 if self.verbose:
-                    print(f"\n[Intent Classification]")
-                    print(f"  Type: {intent.intent_type.value}")
-                    print(f"  Confidence: {intent.confidence:.0%}")
-                    print(f"  Priority: {intent.priority}")
-                    print(f"  Entities: {intent.entities}")
-                    print(f"  Suggested Flow: {intent.suggested_flow}")
+                    console.print("\n[cyan][Intent Classification][/cyan]")
+                    console.print(f"  Type: [yellow]{intent.intent_type.value}[/yellow]")
+                    console.print(f"  Confidence: [green]{intent.confidence:.0%}[/green]")
+                    console.print(f"  Priority: [blue]{intent.priority}[/blue]")
+                    console.print(f"  Entities: {intent.entities}")
+                    console.print(f"  Suggested Flow: {intent.suggested_flow}")
                 
                 # Use fast-path if conditions are met
                 if intent_classifier.should_use_fast_path(intent):
@@ -937,75 +942,62 @@ class TroubleshootingAgent:
             message = str(e)
             if "iteration limit" in message.lower() or "time limit" in message.lower():
                 return self._build_partial_diagnosis()
+            # Use enhanced error formatting
+            error_msg = ErrorFormatter.format_error(e, context="While processing your query")
+            console.print(error_msg)
             return f"Error running agent: {message}"
     
     def _run_with_spinner(self, query: str) -> str:
-        """Run the agent while showing a simple spinner in interactive mode."""
-        stop_event = threading.Event()
+        """Run the agent while showing a rich progress indicator in interactive mode."""
         response_holder: Dict[str, str] = {"response": ""}
-
-        def spinner():
-            frames = ["|", "/", "-", "\\"]
-            idx = 0
-            while not stop_event.is_set():
-                sys.stdout.write(f"\rAgent is thinking... {frames[idx % len(frames)]}")
-                sys.stdout.flush()
-                idx += 1
-                time.sleep(0.1)
-            sys.stdout.write("\r" + (" " * 40) + "\r")
-            sys.stdout.flush()
-
+        
         def worker():
             response_holder["response"] = self.run(query)
-            stop_event.set()
-
-        spinner_thread = threading.Thread(target=spinner)
-        worker_thread = threading.Thread(target=worker)
-
-        spinner_thread.start()
-        worker_thread.start()
-
-        worker_thread.join()
-        stop_event.set()
-        spinner_thread.join()
-
+        
+        with ProgressIndicator("🤔 Analyzing your query...") as progress:
+            worker_thread = threading.Thread(target=worker)
+            worker_thread.start()
+            worker_thread.join()
+        
         return response_holder["response"] or "Error running agent: No response was produced."
 
     def chat(self):
         """
         Start an interactive chat session with the agent.
         """
-        print("=" * 70)
-        print("Kubernetes & Consul Troubleshooting Agent")
-        print("=" * 70)
-        print("\nI'm here to help you troubleshoot Kubernetes and Consul issues.")
+        # Print header with rich formatting
+        print_header(
+            "Kubernetes & Consul Troubleshooting Agent",
+            "AI-powered troubleshooting for your service mesh"
+        )
         
+        console.print("\n[dim]I'm here to help you troubleshoot Kubernetes and Consul issues.[/dim]\n")
+        
+        # Show enabled features
         if self.enable_memory:
-            print("💾 Conversation memory is ENABLED - I'll remember our discussion!")
+            RichOutput.print_info("Conversation memory is ENABLED - I'll remember our discussion!", "💾")
         
         if self.enable_intent_routing:
-            print("🚀 Intent routing is ENABLED - Fast-path for common issues!")
+            RichOutput.print_info("Intent routing is ENABLED - Fast-path for common issues!", "🚀")
         
         if self.enable_cache:
-            print("⚡ Session caching is ENABLED - Faster repeated queries!")
+            RichOutput.print_info("Session caching is ENABLED - Faster repeated queries!", "⚡")
         
-        print("\nSpecial commands:")
-        if self.enable_memory:
-            print("  /clear      - Clear conversation memory")
-            print("  /history    - Show conversation history")
-            print("  /summary    - Show conversation summary")
-        if self.enable_cache:
-            print("  /cache      - Show cache statistics")
-            print("  /clearcache - Clear session cache")
+        if self.enable_workflow and WORKFLOW_AVAILABLE:
+            RichOutput.print_info("LangGraph workflows are ENABLED - Advanced troubleshooting!", "🔄")
         
-        print("\nType 'exit' or 'quit' to end the session.\n")
+        console.print()
+        
+        # Show available commands
+        console.print("[dim]Type [bold]/help[/bold] for available commands or [bold]/examples[/bold] for common scenarios.[/dim]")
+        console.print("[dim]Type [bold]exit[/bold] or [bold]quit[/bold] to end the session.[/dim]\n")
         
         while True:
             try:
-                user_input = input("\nYou: ").strip()
+                user_input = console.input("[bold cyan]You:[/bold cyan] ").strip()
                 
                 if user_input.lower() in ['exit', 'quit', 'q']:
-                    print("\nGoodbye! Happy troubleshooting!")
+                    console.print("\n[green]Goodbye! Happy troubleshooting! 👋[/green]")
                     break
                 
                 if not user_input:
@@ -1015,53 +1007,72 @@ class TroubleshootingAgent:
                 if user_input.startswith('/'):
                     if user_input.lower() == '/clear':
                         self.clear_memory()
-                        print("✓ Conversation memory cleared.")
+                        print_success("Conversation memory cleared.")
                         continue
                     elif user_input.lower() == '/history':
                         history = self.get_conversation_history()
                         if not history:
-                            print("No conversation history yet.")
+                            console.print("[dim]No conversation history yet.[/dim]")
                         else:
-                            print(f"\n📜 Conversation History ({len(history)} messages):")
+                            console.print(f"\n[bold cyan]📜 Conversation History[/bold cyan] [dim]({len(history)} messages)[/dim]:")
                             for i, msg in enumerate(history, 1):
-                                role = "You" if msg.type == "human" else "Agent"
-                                print(f"\n{i}. {role}:")
-                                print(f"   {msg.content[:200]}{'...' if len(msg.content) > 200 else ''}")
+                                role = "[green]You[/green]" if msg.type == "human" else "[blue]Agent[/blue]"
+                                content = str(msg.content)[:200]
+                                if len(str(msg.content)) > 200:
+                                    content += "..."
+                                console.print(f"\n{i}. {role}:")
+                                console.print(f"   [dim]{content}[/dim]")
                         continue
                     elif user_input.lower() == '/summary':
-                        print(f"\n📋 Conversation Summary:\n{self.get_conversation_summary()}")
+                        console.print(f"\n[bold cyan]📋 Conversation Summary:[/bold cyan]\n{self.get_conversation_summary()}")
                         continue
                     elif user_input.lower() == '/cache':
-                        print(f"\n{self.get_cache_stats()}")
+                        console.print(f"\n{self.get_cache_stats()}")
                         continue
                     elif user_input.lower() == '/clearcache':
                         self.clear_cache()
-                        print("✓ Session cache cleared.")
+                        print_success("Session cache cleared.")
+                        continue
+                    elif user_input.lower() == '/help':
+                        HelpFormatter.show_commands(self.enable_memory, self.enable_cache)
+                        continue
+                    elif user_input.lower() == '/examples':
+                        HelpFormatter.show_examples()
                         continue
                     else:
-                        print(f"Unknown command: {user_input}")
-                        available = ["/clear", "/history", "/summary"]
-                        if self.enable_cache:
-                            available.extend(["/cache", "/clearcache"])
-                        print(f"Available commands: {', '.join(available)}")
+                        print_warning(f"Unknown command: {user_input}")
+                        console.print("[dim]Type [bold]/help[/bold] to see available commands.[/dim]")
                         continue
                 
                 response = self._run_with_spinner(user_input)
-                print(f"\nAgent: {response}")
-                print(self._status_line_for_response(response))
+                console.print(f"\n[bold blue]Agent:[/bold blue] {response}")
+                console.print(RichOutput.print_status_line(response))
                 
             except KeyboardInterrupt:
-                print("\n\nGoodbye! Happy troubleshooting!")
+                console.print("\n\n[green]Goodbye! Happy troubleshooting! 👋[/green]")
                 break
             except Exception as e:
-                print(f"\nError: {str(e)}")
+                error_msg = ErrorFormatter.format_error(e, context="During chat session")
+                console.print(f"\n{error_msg}")
 
 
 def main():
     """Main entry point for the agent."""
     import argparse
     
-    parser = argparse.ArgumentParser(description="Kubernetes & Consul Troubleshooting Agent")
+    parser = argparse.ArgumentParser(
+        description="Kubernetes & Consul Troubleshooting Agent",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  meshtrbl                                    # Start interactive chat
+  meshtrbl --setup                            # Run configuration wizard
+  meshtrbl --query "why is my pod failing?"   # Single query mode
+  meshtrbl --no-cache --verbose               # Disable cache, enable verbose
+  meshtrbl --help                             # Show this help
+        """
+    )
+    parser.add_argument("--setup", action="store_true", help="Run interactive configuration wizard")
     parser.add_argument("--model", default="gpt-4o-mini", help="OpenAI model to use")
     parser.add_argument("--reasoning-model", help="Optional stronger model for complex live troubleshooting")
     parser.add_argument("--namespace", default="default", help="Default Kubernetes namespace")
@@ -1072,6 +1083,7 @@ def main():
     parser.add_argument("--no-memory", action="store_true", help="Disable conversation memory")
     parser.add_argument("--no-intent-routing", action="store_true", help="Disable intent classification and fast-path routing")
     parser.add_argument("--no-cache", action="store_true", help="Disable session-scoped caching")
+    parser.add_argument("--no-health-check", action="store_true", help="Skip connection health checks on startup")
     parser.add_argument("--cache-ttl", type=int, default=300, help="Cache TTL in seconds (default: 300)")
     parser.add_argument("--cache-size", type=int, default=100, help="Maximum cache entries (default: 100)")
     parser.add_argument("--max-iterations", type=int, default=35, help="Maximum tool calls per query (default: 35)")
@@ -1079,32 +1091,72 @@ def main():
     
     args = parser.parse_args()
     
-    # Create agent
-    agent = TroubleshootingAgent(
-        model=args.model,
-        reasoning_model=args.reasoning_model,
-        k8s_namespace=args.namespace,
-        consul_host=args.consul_host,
-        consul_port=args.consul_port,
-        verbose=args.verbose,
-        enable_memory=not args.no_memory,
-        enable_intent_routing=not args.no_intent_routing,
-        enable_cache=not args.no_cache,
-        cache_ttl=args.cache_ttl,
-        cache_max_size=args.cache_size,
-        max_iterations=args.max_iterations,
-        max_execution_time=args.max_time
-    )
+    # Run setup wizard if requested
+    if args.setup:
+        from .config_wizard import ConfigWizard
+        ConfigWizard.run_setup()
+        return
     
-    # Run in appropriate mode
-    if args.query:
-        # Single query mode
-        response = agent.run(args.query)
-        print(response)
-        print(agent._status_line_for_response(response))
-    else:
-        # Interactive chat mode
-        agent.chat()
+    # Try to load configuration from file
+    from .config_wizard import ConfigWizard
+    saved_config = ConfigWizard.load_config()
+    if saved_config:
+        # Override with saved config values if not specified on command line
+        if not args.model and 'model' in saved_config:
+            args.model = saved_config['model']
+        if not args.namespace and 'kubernetes_namespace' in saved_config:
+            args.namespace = saved_config['kubernetes_namespace']
+        if not args.consul_host and 'consul_host' in saved_config:
+            args.consul_host = saved_config['consul_host']
+        if 'consul_port' in saved_config:
+            args.consul_port = saved_config['consul_port']
+        # Apply feature flags from config
+        if 'enable_memory' in saved_config and not args.no_memory:
+            args.no_memory = not saved_config['enable_memory']
+        if 'enable_cache' in saved_config and not args.no_cache:
+            args.no_cache = not saved_config['enable_cache']
+        if 'enable_intent_routing' in saved_config and not args.no_intent_routing:
+            args.no_intent_routing = not saved_config['enable_intent_routing']
+    
+    # Run health checks unless disabled
+    if not args.no_health_check:
+        health_ok = ConnectionHealthCheck.run_all_checks(args.consul_host, args.consul_port)
+        if not health_ok:
+            print_warning("Some connections failed. The agent may not work correctly.")
+            console.print("[dim]Use --no-health-check to skip these checks.[/dim]\n")
+    
+    try:
+        # Create agent
+        agent = TroubleshootingAgent(
+            model=args.model,
+            reasoning_model=args.reasoning_model,
+            k8s_namespace=args.namespace,
+            consul_host=args.consul_host,
+            consul_port=args.consul_port,
+            verbose=args.verbose,
+            enable_memory=not args.no_memory,
+            enable_intent_routing=not args.no_intent_routing,
+            enable_cache=not args.no_cache,
+            cache_ttl=args.cache_ttl,
+            cache_max_size=args.cache_size,
+            max_iterations=args.max_iterations,
+            max_execution_time=args.max_time
+        )
+        
+        # Run in appropriate mode
+        if args.query:
+            # Single query mode
+            response = agent.run(args.query)
+            console.print(response)
+            console.print(RichOutput.print_status_line(response))
+        else:
+            # Interactive chat mode
+            agent.chat()
+    
+    except Exception as e:
+        error_msg = ErrorFormatter.format_error(e, context="Failed to start agent")
+        console.print(f"\n{error_msg}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
