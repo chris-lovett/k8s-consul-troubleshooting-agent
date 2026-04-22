@@ -7,7 +7,7 @@ An AI-powered troubleshooting agent built with LangChain, LangGraph, and OpenAI 
 
 ## 🎯 Features
 
-### Phase 1: Basic Agent ✅ Complete
+### Phase 1: Basic Agent
 - ✅ Kubernetes pod inspection and diagnostics
 - ✅ Pod logs retrieval and analysis
 - ✅ Consul service discovery and health checks
@@ -15,14 +15,14 @@ An AI-powered troubleshooting agent built with LangChain, LangGraph, and OpenAI 
 - ✅ Interactive chat interface
 - ✅ ReAct reasoning pattern for systematic troubleshooting
 
-### Phase 2: Enhanced Intelligence ✅ Complete
+### Phase 2: Enhanced Intelligence
 - ✅ Common error pattern recognition for faster diagnosis
 - ✅ Intent classification and direct routing for common troubleshooting flows
 - ✅ Session-scoped caching for instant repeated queries
 - ✅ Consul Connect sidecar proxy diagnostics 
 - ✅ Advanced service-to-service communication analysis 
 
-### Phase 3: LangGraph Workflows ✅ Complete
+### Phase 3: LangGraph Workflows 
 - ✅ State-based workflow orchestration
 - ✅ Parallel tool execution for 2-3x faster diagnostics
 - ✅ Conditional routing based on issue type
