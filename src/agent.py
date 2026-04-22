@@ -6,9 +6,14 @@ import os
 import sys
 import threading
 import time
+import warnings
 from collections import Counter
 from typing import Dict, Optional, List
 from dotenv import load_dotenv
+
+# Suppress urllib3 SSL warnings when SSL verification is disabled
+from urllib3.exceptions import InsecureRequestWarning
+warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain.tools import Tool

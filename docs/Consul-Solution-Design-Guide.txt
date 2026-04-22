@@ -1,0 +1,3174 @@
+=== Page 1 ===
+Consul:SolutionDesignGuide
+Built from commit e3153b9
+HashiCorp | Validated Designs
+20 April 2026
+
+=== Page 2 ===
+Consul: Solution Design Guide 20 April 2026
+Contents
+1 Introduction 4
+1.1 Objective . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+1.2 Audience . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+1.3 Supported versions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+1.4 Language and definitions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+2 WhatisConsul? 6
+2.1 Consul Concepts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+2.1.1 Service discovery . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+2.1.2 Service mesh . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+2.2 Core components . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+2.2.1 Control plane . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 10
+2.2.2 Dataplane . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+3 Enterprisefeatures 13
+3.0.1 Availability and performance . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+3.0.2 Scalability . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+3.0.3 Operational excellence . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+3.0.4 Security . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+3.1 Recommended deployment architecture . . . . . . . . . . . . . . . . . . . . . . . . . 15
+3.2 Consul agent configuration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+3.2.1 Consul server example configuration . . . . . . . . . . . . . . . . . . . . . . . 17
+3.2.2 Consul client example configuration . . . . . . . . . . . . . . . . . . . . . . . . 19
+3.3 Consul on Kubernetes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+3.4 Kubernetes deployment architecture . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+3.5 Component compatibility . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 25
+3.6 Sizing guidelines . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 25
+3.6.1 Control plane on VMs . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+3.7 Control plane on Kubernetes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 28
+3.8 Roles and responsibilities . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 28
+3.8.1 Personnel . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 28
+3.8.2 Access . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 29
+HashiCorp | Validated Designs 1
+
+=== Page 3 ===
+Consul: Solution Design Guide 20 April 2026
+3.9 Shared services . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 30
+3.9.1 DNS . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 30
+3.9.2 Security . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 32
+3.9.3 Secrets . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 39
+3.9.4 Monitoring . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 41
+3.9.5 Metrics . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 41
+3.9.6 Logs . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 43
+3.10 VM-based technical requirements . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 43
+3.10.1 Infrastructure . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 45
+3.11 Kubernetes Based control plane technical requirements . . . . . . . . . . . . . . . . . 51
+3.11.1 Infrastructure . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 53
+3.11.2 Compute . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 53
+3.11.3 Networking . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 54
+4 DeployingConsulusingTerraform 61
+4.1 Platform-specific guidance . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 61
+4.2 Deployment sequence overview . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 62
+4.3 Preparation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 63
+4.3.1 Create the TLS certificate files . . . . . . . . . . . . . . . . . . . . . . . . . . . 63
+4.3.2 Obtain the Consul Enterprise license file . . . . . . . . . . . . . . . . . . . . . 63
+4.3.3 Download and install the Consul CLI . . . . . . . . . . . . . . . . . . . . . . . . 64
+4.3.4 Download and install the Terraform CLI . . . . . . . . . . . . . . . . . . . . . . 64
+4.3.5 Configure your cloud credentials. . . . . . . . . . . . . . . . . . . . . . . . . . . 64
+4.4 Installation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 65
+4.4.1 Set up your prerequisite resources . . . . . . . . . . . . . . . . . . . . . . . . . 65
+4.4.2 Initialize your Terraform workspace . . . . . . . . . . . . . . . . . . . . . . . . 67
+4.4.3 Configure variables for the deployment . . . . . . . . . . . . . . . . . . . . . . 67
+4.4.4 Create and apply the Terraform plan . . . . . . . . . . . . . . . . . . . . . . . . 68
+4.4.5 Verify that the cluster has been successfully created and is accessible . . . . 70
+5 Usecases 71
+5.1 Service discovery and health monitoring . . . . . . . . . . . . . . . . . . . . . . . . . . 71
+5.1.1 Register client node and health check . . . . . . . . . . . . . . . . . . . . . . . 71
+5.1.2 Register service and health checks . . . . . . . . . . . . . . . . . . . . . . . . . 73
+5.1.3 Register external service with service discovery . . . . . . . . . . . . . . . . . 74
+HashiCorp | Validated Designs 2
+
+=== Page 4 ===
+Consul: Solution Design Guide 20 April 2026
+5.2 Service mesh and gateways . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 77
+5.2.1 Secure service communication with Consul service mesh and Envoy . . . . . 77
+5.2.2 Connect services outside the service mesh . . . . . . . . . . . . . . . . . . . . 78
+5.2.3 API gateway - control access into service mesh . . . . . . . . . . . . . . . . . 81
+5.3 Appendix 1: Admin partitions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 86
+5.4 Appendix 2: Kubernetes catalog sync . . . . . . . . . . . . . . . . . . . . . . . . . . . 87
+5.5 Appendix 3: Gossip protocol . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 87
+5.6 Appendix 4: Sample Terraform and helm configuration . . . . . . . . . . . . . . . . . 87
+5.6.1 Consul server . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 87
+5.6.2 Consul client . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 88
+5.6.3 Helm configuration - load balancer . . . . . . . . . . . . . . . . . . . . . . . . 90
+5.6.4 ELB_IRSA - Terraform configuration . . . . . . . . . . . . . . . . . . . . . . . . 91
+5.6.5 AWS load balancer controller - TF . . . . . . . . . . . . . . . . . . . . . . . . . 91
+5.6.6 EBS CSI driver . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 92
+5.6.7 Consul server helm . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 94
+5.6.8 Non-default partition K8s cluster - helm . . . . . . . . . . . . . . . . . . . . . 96
+5.6.9 Agent telemetry . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 97
+5.6.10 Consul telemetry collector intention . . . . . . . . . . . . . . . . . . . . . . . . 97
+5.6.11 Consul server sizing - EC2 to Consul cluster size . . . . . . . . . . . . . . . . 98
+5.6.12 Agents . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 98
+6 Credits 100
+7 Changelog 100
+7.1 2026-01 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 100
+7.2 2025-06 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 100
+7.3 2025-05 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 101
+7.4 2025-01 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 101
+7.5 2024-02 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 101
+HashiCorp | Validated Designs 3
+
+=== Page 5 ===
+Consul: Solution Design Guide 20 April 2026
+1 Introduction
+HashiCorp Validated Designs (HVDs) provide customers and partners with best practices for de-
+ploying resilient, secure, and high-performance HashiCorp solutions on various platforms. This
+solution guide offers HashiCorp’s recommendations for deploying Consul Enterprise, enabling your
+organization to leverage Consul for discovering and securely connecting services across any en-
+vironment using identity-based networking. By following this guide, you can enhance application
+resilience, improve uptime, accelerate deployment, and strengthen security in service-to-service
+communications.
+1.1 Objective
+The objective of this Consul Solution Design Guide is to assist you in deploying Consul Enterprise.
+Consul allows users to register services for service discovery use cases in a centralized registry,
+enabling the discovery, monitoring, and tracking of service health. Additionally, it supports ser-
+vice mesh use cases for secure service-to-service communication across multiple environments,
+platforms, and runtimes.
+This guide addresses these objectives using two architectural patterns:
+•Consul on virtual machines (VMs)
+•Consul on Kubernetes
+These patterns are adaptable to various cloud providers and on-premises environments, ensuring
+flexibility in deployment.
+Note
+The recommendations in this solution guide are derived from different production Consul
+deployments. Before you implement these recommendations, carefully evaluate them and
+determine if it is acceptable for your specific environment.
+1.2 Audience
+This document is designed for development, platform, networking, and application security teams
+seeking to implement Consul Enterprise to register, discover, and securely connect applications
+across cloud and datacenter environments.
+HashiCorp | Validated Designs 4
+
+=== Page 6 ===
+Consul: Solution Design Guide 20 April 2026
+1.3 Supportedversions
+This version of the guide has been validated with the following versions of Consul Enterprise:
+•Consul Enterprise 1.19.x+ent
+1.4 Languageanddefinitions
+This documentation uses technology-agnostic terminology; however, some terms may vary slightly
+between cloud providers. Below are the definitions of key terms used throughout this document.
+Cloud provider terms Definition
+Region A physical location with multiple clusters of
+data centers globally.
+Availability zone (AZ) One or more distinct data centers within a
+region, each with redundant power, networking,
+and connectivity.
+Public subnet A network accessible to application users.
+Private subnet A network used internally by applications, not
+accessible to application users.
+Secrets Manager (SM) A system used to securely store and manage
+secrets for bootstrapping and configuration.
+Virtual private cloud (VPC) A software-defined cloud networking
+environment.
+Consul terms Definition
+Datacenter The smallest unit of Consul infrastructure
+capable of performing basic operations. It may
+align with cloud region boundaries.
+HashiCorp | Validated Designs 5
+
+=== Page 7 ===
+Consul: Solution Design Guide 20 April 2026
+Consul terms Definition
+Partition or Admin Partition A logical boundary within a single Consul
+datacenter that separates distinct network
+boundaries or teams.
+Peering or Cluster Peering A Consul datacenter or admin partition with an
+established relationship with a remote
+datacenter or partition.
+Attribute Definition
+Availability Design features that minimize the impact of
+subsystem failures on overall solution uptime.
+Operational excellence Best practices that ensure efficient
+management and operation of the system.
+Performance How design decisions affect the overall
+performance of the solution.
+Scalability The ability of design decisions to allow the
+service usage and control plane to handle
+increasing workloads.
+Security How a design decision affects the security
+posture of the overall solution.
+2 WhatisConsul?
+HashiCorp Consul is a service networking solution that helps teams manage and secure network
+connectivity between services across on-premises, multi-cloud environments, and various run-
+times. Consul provides features such as service discovery, service mesh, traffic management, and
+automated updates to network infrastructure devices. These features can be used individually or
+integrated within a single Consul deployment.
+HashiCorp | Validated Designs 6
+
+=== Page 8 ===
+Consul: Solution Design Guide 20 April 2026
+2.1 ConsulConcepts
+2.1.1 Servicediscovery
+A popular use case for Consul is its service discovery capabilities. Service instances are registered
+to a central registry that monitors them through health checks. Utilizing a service identity, rather
+than traditionally an IP address and port, the service catalog can dynamically track and report
+service instance changes within a service catalog. Consumers then utilize DNS, HTTP APIs and
+Consul’s CLI to dynamically retrieve other service’s information from the service catalog.
+Consul provides a control plane that enables you to register, query, and secure services deployed
+across your network. The control plane is the part of the network infrastructure that maintains a
+central registry to track services and their respective IP addresses.
+HashiCorp | Validated Designs 7
+
+=== Page 9 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 1: Consul Service Registry
+HashiCorp | Validated Designs 8
+
+=== Page 10 ===
+Consul: Solution Design Guide 20 April 2026
+2.1.2 Servicemesh
+Consul’s service mesh provides secure service-to-service connection, authorization, and encryp-
+tion within the mesh. Leveraging mutual transport layer security (mTLS), sidecar proxies run in
+the mesh to ensure service communication security without requiring changes to application logic.
+Consul service mesh allows you to divide application layer traffic between different subsets of ser-
+vice instances. You can leverage L7 traffic management capabilities to perform complex processes,
+such as configuring backup services for failover scenarios, canary and A-B testing, blue-green de-
+ployments. In addition, service mesh intentions enable secure access control. Intentions control
+traffic between services at both the networking layer (Layer 4) and the application layer (Layer 7).
+When using Consul’s service mesh capabilities, Consul interacts with the data plane, the part of the
+network infrastructure that processes data requests. Consul dynamically configures sidecar and
+gateway proxies in the request path, which enables you to authorize service-to-service connections,
+route requests to healthy service instances, and enforce mTLS encryption without modifying your
+service’s code. This ensures that communication remains performant and reliable.
+Figure 2: Consul Logical Architecture
+HashiCorp | Validated Designs 9
+
+=== Page 11 ===
+Consul: Solution Design Guide 20 April 2026
+2.2 Corecomponents
+2.2.1 Controlplane
+TheControl plane is responsible for the duties pertaining to health, management and configuration
+of Consul agents (server, clients) and consul-dataplane. This includes, but is not limited to:
+•Cluster state and replication
+•Cluster membership between Consul Server and clients.
+•Managing data plane proxy configurations:
+•Application proxies
+•Consul Gateway proxies.
+•Health checks for Consul Servers, Consul clients, applications and application proxies.
+•Cluster peering relationships and which services are shared between peered clusters.
+Consulserver
+Consul servers store all the configuration data for your infrastructure. The Consul server maintains
+a catalog of each service, with its IP address and port number, allowing services to discover and
+communicate with one another. The server also provides APIs for managing nodes, services, health
+checks, and more.
+We recommend deploying 6 servers in a cluster. The more servers you deploy, the greater the re-
+silience and availability in the event of a failure. More servers, however, slow down consensus , which
+is a critical server function that enables Consul to efficiently and effectively process information.
+Consul server clusters elect a single server to be the leader through consensus. The leader pro-
+cesses all queries and transactions, which prevents conflicting updates in clusters containing mul-
+tiple servers.
+Servers that are not currently acting as the cluster leader are called followers. Followers forward
+write requests from client agents to the cluster leader. The leader replicates the write requests to
+all other servers in the cluster. Replication ensures that if the leader is unavailable, other servers
+in the cluster can elect another leader without losing any data. Read requests can be serviced by
+followers depending on the specified consistency mode .
+When using redundancy zones, you can configure non-voting members to improve Consul re-
+siliency and to enhance read scalability. If voting followers become unavailable, Consul would
+HashiCorp | Validated Designs 10
+
+=== Page 12 ===
+Consul: Solution Design Guide 20 April 2026
+attempt to keep server quorum by promoting a non-voting member to become a voting follower.
+In normal operations, non-voting members enhance read scalability by increasing the number of
+servers that can service a read request.
+In standard deployments, Consul uses a control plane that contains both server agents and client
+agents. Server agents maintain the service catalog and service mesh, including its security and
+consistency, while client agents manage communications between service instances, their sidecar
+proxies, and the servers. This model is optimal for applications deployed on virtual machines or
+bare metal servers.
+You must use this model if you have services running on VMs.
+ControlPlaneforKubernetes(consul-k8s)
+Theconsul -k8s-control -plane binary includes first-class integrations between Consul and Ku-
+bernetes. The project encapsulates multiple use cases such as syncing services, injecting Consul
+sidecars, and more.
+Following features are covered in this solution design guide:
+•Catalog Sync : Sync Consul services into first-class Kubernetes services and vice versa. This
+enables Kubernetes to easily access external services and for non-Kubernetes nodes to easily
+discover and access Kubernetes services.
+•Consul Service Mesh : Run Consul Service Mesh on Kubernetes. This feature injects Envoy
+sidecars and registers your Pods with Consul.
+2.2.2 Dataplane
+Consulclients
+For standard VM, bare metal, and Nomad workloads, Consul uses an agent-based model that relies
+on client agents. You must run client agents on every compute node in your datacenter. Consul
+clients accept service registrations and report node and service health status to the Consul clus-
+ter.
+HashiCorp | Validated Designs 11
+
+=== Page 13 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 3: Consul Clients
+Consul-dataplaneonkubernetes
+Consul on Kubernetes (as of Consul v1.14) relies on consul-dataplane (referenced as Dataplane in
+the diagram below) which is a lightweight process for managing Envoy proxies. Consul Dataplane
+removes the need to run client agents on every node in a cluster for service discovery and ser-
+vice mesh. Instead, Consul deploys sidecar proxies that provide lower latency, support additional
+runtimes, and integrate with cloud infrastructure providers.
+HashiCorp | Validated Designs 12
+
+=== Page 14 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 4: Consul Dataplane
+3 Enterprisefeatures
+This Hashicorp Validated Design is prescriptive technical content for HashiCorp Enterprise products
+and solutions.
+The following features are available in Consul Enterprise and will be part of our recommendations.
+Note
+Consul Enterprise features address the organizational complexity of operating, scaling and
+governing Consul.
+HashiCorp | Validated Designs 13
+
+=== Page 15 ===
+Consul: Solution Design Guide 20 April 2026
+3.0.1 Availabilityandperformance
+•Sameness groups: Define partitions and cluster peers as a member of a group to streamline
+configuration or easily configure failover to members of the group.
+•Redundancy zones: Deploy backup voting Consul servers to efficiently improve the Consul
+fault tolerance.
+•Server request rate limit per source IP: Limit gRPC and RPC traffic to servers by source IP
+addresses.
+3.0.2 Scalability
+•Read replicas: Deploy non-voting Consul servers to enhance the scalability of the read re-
+quests.
+3.0.3 Operationalexcellence
+•Autopilot/automated upgrades: Assist in upgrades of the Consul cluster via version updates.
+•Automated backups: Configure and assist in the backup of the cluster state.
+•Admin partitions: Define administrative boundaries between tenants within a single consul
+datacenter.
+•Namespaces: Define resource boundaries within a single admin partition for further organi-
+zational flexibility.
+3.0.4 Security
+•OIDC auth method: Manage user access to Consul through an OIDC identity provider instead
+of Consul ACLs directly.
+•Audit logging: Capture Consul access and usage patterns by reviewing access to Consul
+HTTP API.
+•FIPS 140-2 compliance: Leverage FIPS builds of Consul Enterprise to ensure Consul deploy-
+ments are secured with BoringCrypto and CNGCrypto, and compliant with FIPS 140-2.
+HashiCorp | Validated Designs 14
+
+=== Page 16 ===
+Consul: Solution Design Guide 20 April 2026
+3.1 Recommendeddeploymentarchitecture
+We recommend deploying the control plane with 6 server nodes in the Consul cluster, evenly dis-
+tributed across three availability zones. Configure Consul Autopilot to enable the redundancy zones
+feature, mapping each availability zone to a Consul redundancy zone. Autopilot will maintain 1 vot-
+ing server per zone, while the remaining server in each zone will act as a non-voting server. These
+non-voting servers improve read scalability and can be promoted to voting servers in the event of
+a voting server failure.
+Note
+This section outlines the architecture components and best practices for deploying Consul
+on virtual machines in a production environment. By leveraging the cloud provider’s security
+and high availability features alongside the recommended architecture, you can ensure the
+availability, scalability, and security of both the Consul control plane and data plane.
+HashiCorp | Validated Designs 15
+
+=== Page 17 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 5: consul architecture
+HashiCorp | Validated Designs 16
+
+=== Page 18 ===
+Consul: Solution Design Guide 20 April 2026
+3.2 Consulagentconfiguration
+You can create one or more configuration files to configure the Consul agent. The configuration
+files are formatted as HCL or JSON. The solution design guide recommends HCL and will deploy
+server configuration in HCL.
+The below configuration is required to start the Consul agents in server ( server .hcl) and client
+(client .hcl) mode respectively.
+3.2.1 Consulserverexampleconfiguration
+The following is an example Consul server agent configuration.
+server.hcl
+HashiCorp | Validated Designs 17
+
+=== Page 19 ===
+Consul: Solution Design Guide 20 April 2026
+AWS
+data_dir ="/opt/consul "
+log_level ="${consul_log_level }"
+datacenter ="${consul_datacenter }"
+encrypt ="${gossip_encryption_key }"
+encrypt_verify_incoming =true
+encrypt_verify_outgoing =true
+server =true
+license_path ="${consul_license_path }"
+#Configure Redundancy Zones
+autopilot {
+redundancy_zone_tag ="zone "
+}
+node_meta {
+zone ="${consul_server_availability_zone }"
+}
+#Enable ACLs
+acl {
+enabled =true
+default_policy ="deny "
+}
+client_addr ="0.0.0.0 "
+ports = {
+"grpc "= -1
+"grpc_tls "= 8503
+"http "= -1
+"https "= 8501
+}
+enable_central_service_config =true
+advertise_addr ="$INTERNAL_IP_ADDRESS "
+retry_join = ["provider =aws tag_key =Environment -Name tag_value =primary -consul "
+]
+#TLS config
+tls {
+defaults {
+verify_incoming =false
+verify_outgoing =true
+ca_file ="/etc/consul .d/tls/consul -ca.pem"
+ca_path ="/etc/consul .d/tls"
+cert_file ="/etc/consul .d/tls/consul -cert .pem"
+key_file ="/etc/consul .d/tls/consul -key.pem"
+}
+#overrides tls.defaults path ,ifspecified .
+https {
+verify_incoming =true
+verify_outgoing =true
+}
+grpc {
+verify_incoming =false
+}
+internal_rpc {
+verify_server_hostname =true
+}
+}
+auto_encrypt {
+allow_tls =true
+}
+telemetry {
+prometheus_retention_time ="480h",
+disable_hostname =true
+metrics_path ="/v1/agent /metrics "
+}
+performance {
+raft_multiplier = 1
+}
+#Server performance config
+limits {
+rpc_max_conns_per_client = 100
+http_max_conns_per_client = 200
+}
+ui_config {
+enabled =true
+}
+GCP
+data_dir ="/opt/consul "
+log_level ="${consul_log_level }"
+datacenter ="${consul_datacenter }"
+encrypt ="${gossip_encryption_key }"
+encrypt_verify_incoming =true
+encrypt_verify_outgoing =true
+server =true
+license_path ="${consul_license_path }"
+#Configure Redundancy Zones
+autopilot {
+redundancy_zone_tag ="zone "
+}
+node_meta {
+zone ="${consul_server_availability_zone }"
+}
+#Enable ACLs
+acl {
+enabled =true
+default_policy ="deny "
+}
+client_addr ="0.0.0.0 "
+ports = {
+"grpc "= -1
+"grpc_tls "= 8503
+"http "= -1
+"https "= 8501
+}
+enable_central_service_config =true
+advertise_addr ="$INTERNAL_IP_ADDRESS "
+retry_join = ["provider =gce project_name =GCP_Project tag_value =primary -consul "
+]
+#TLS config
+tls {
+defaults {
+verify_incoming =false
+verify_outgoing =true
+ca_file ="/etc/consul .d/tls/consul -ca.pem"
+ca_path ="/etc/consul .d/tls"
+cert_file ="/etc/consul .d/tls/consul -cert .pem"
+key_file ="/etc/consul .d/tls/consul -key.pem"
+}
+#overrides tls.defaults path ,ifspecified .
+https {
+verify_incoming =true
+verify_outgoing =true
+}
+grpc {
+verify_incoming =false
+}
+internal_rpc {
+verify_server_hostname =true
+}
+}
+auto_encrypt {
+allow_tls =true
+}
+telemetry {
+prometheus_retention_time ="480h",
+disable_hostname =true
+metrics_path ="/v1/agent /metrics "
+}
+performance {
+raft_multiplier = 1
+}
+#Server performance config
+limits {
+rpc_max_conns_per_client = 100
+http_max_conns_per_client = 200
+}
+ui_config {
+enabled =true
+}
+Azure
+data_dir ="/opt/consul "
+log_level ="${consul_log_level }"
+datacenter ="${consul_datacenter }"
+encrypt ="${gossip_encryption_key }"
+encrypt_verify_incoming =true
+encrypt_verify_outgoing =true
+server =true
+license_path ="${consul_license_path }"
+#Configure Redundancy Zones
+autopilot {
+redundancy_zone_tag ="zone "
+}
+node_meta {
+zone ="${consul_server_availability_zone }"
+}
+#Enable ACLs
+acl {
+enabled =true
+default_policy ="deny "
+}
+client_addr ="0.0.0.0 "
+ports = {
+"grpc "= -1
+"grpc_tls "= 8503
+"http "= -1
+"https "= 8501
+}
+enable_central_service_config =true
+advertise_addr ="$INTERNAL_IP_ADDRESS "
+retry_join = ["provider =azure tag_key =Environment -Name tag_value =primary -
+consul "]
+#TLS config
+tls {
+defaults {
+verify_incoming =false
+verify_outgoing =true
+ca_file ="/etc/consul .d/tls/consul -ca.pem"
+ca_path ="/etc/consul .d/tls"
+cert_file ="/etc/consul .d/tls/consul -cert .pem"
+key_file ="/etc/consul .d/tls/consul -key.pem"
+}
+#overrides tls.defaults path ,ifspecified .
+https {
+verify_incoming =true
+verify_outgoing =true
+}
+grpc {
+verify_incoming =false
+}
+internal_rpc {
+verify_server_hostname =true
+}
+}
+auto_encrypt {
+allow_tls =true
+}
+telemetry {
+prometheus_retention_time ="480h",
+disable_hostname =true
+metrics_path ="/v1/agent /metrics "
+}
+performance {
+raft_multiplier = 1
+}
+#Server performance config
+limits {
+rpc_max_conns_per_client = 100
+http_max_conns_per_client = 200
+}
+ui_config {
+enabled =true
+}HashiCorp | Validated Designs 18
+
+=== Page 20 ===
+Consul: Solution Design Guide 20 April 2026
+3.2.2 Consulclientexampleconfiguration
+The following is an example Consul client agent configuration.
+client.hcl
+HashiCorp | Validated Designs 19
+
+=== Page 21 ===
+Consul: Solution Design Guide 20 April 2026
+AWS
+data_dir ="/opt/consul "
+node_name ="consul -client -`hostname `"
+log_level ="${consul_log_level }"
+datacenter ="${consul_datacenter }"
+encrypt ="${gossip_encryption_key }"
+server =false
+client_addr ="0.0.0.0 "
+partition ="${admin_partition }"
+ports = {
+"grpc "= -1
+"grpc_tls "= 8503
+"http "= -1
+"https "= 8501
+}
+advertise_addr ="$INTERNAL_IP_ADDRESS "
+retry_join = ["provider =aws tag_key =Environment -Name tag_value =primary -consul "
+]
+#TLS config
+tls {
+defaults {
+verify_incoming =false
+verify_outgoing =true
+ca_file ="/etc/consul .d/tls/consul -ca.pem"
+ca_path ="/etc/consul .d/tls"
+cert_file ="/etc/consul .d/tls/consul -cert .pem"
+key_file ="/etc/consul .d/tls/consul -key.pem"
+}
+#overrides tls.defaults path ,ifspecified .
+https {
+verify_incoming =true
+verify_outgoing =true
+}
+grpc {
+verify_incoming =false
+}
+internal_rpc {
+verify_server_hostname =true
+}
+}
+auto_encrypt {
+allow_tls =true
+}
+#Telemetry
+telemetry {
+prometheus_retention_time ="480h",
+disable_hostname =true
+}
+GCP
+data_dir ="/opt/consul "
+node_name ="consul -client -`hostname `"
+log_level ="${consul_log_level }"
+datacenter ="${consul_datacenter }"
+encrypt ="${gossip_encryption_key }"
+server =false
+client_addr ="0.0.0.0 "
+partition ="${admin_partition }"
+ports = {
+"grpc "= -1
+"grpc_tls "= 8503
+"http "= -1
+"https "= 8501
+}
+advertise_addr ="$INTERNAL_IP_ADDRESS "
+retry_join = ["provider =gce project_name =GCP_Project tag_value =primary -consul "
+]
+#TLS config
+tls {
+defaults {
+verify_incoming =false
+verify_outgoing =true
+ca_file ="/etc/consul .d/tls/consul -ca.pem"
+ca_path ="/etc/consul .d/tls"
+cert_file ="/etc/consul .d/tls/consul -cert .pem"
+key_file ="/etc/consul .d/tls/consul -key.pem"
+}
+#overrides tls.defaults path ,ifspecified .
+https {
+verify_incoming =true
+verify_outgoing =true
+}
+grpc {
+verify_incoming =false
+}
+internal_rpc {
+verify_server_hostname =true
+}
+}
+auto_encrypt {
+allow_tls =true
+}
+#Telemetry
+telemetry {
+prometheus_retention_time ="480h",
+disable_hostname =true
+}
+Azure
+data_dir ="/opt/consul "
+node_name ="consul -client -`hostname `"
+log_level ="${consul_log_level }"
+datacenter ="${consul_datacenter }"
+encrypt ="${gossip_encryption_key }"
+server =false
+client_addr ="0.0.0.0 "
+partition ="${admin_partition }"
+ports = {
+"grpc "= -1
+"grpc_tls "= 8503
+"http "= -1
+"https "= 8501
+}
+advertise_addr ="$INTERNAL_IP_ADDRESS "
+retry_join = ["provider =azure tag_key =Environment -Name tag_value =primary -
+consul "]
+#TLS config
+tls {
+defaults {
+verify_incoming =false
+verify_outgoing =true
+ca_file ="/etc/consul .d/tls/consul -ca.pem"
+ca_path ="/etc/consul .d/tls"
+cert_file ="/etc/consul .d/tls/consul -cert .pem"
+key_file ="/etc/consul .d/tls/consul -key.pem"
+}
+#overrides tls.defaults path ,ifspecified .
+https {
+verify_incoming =true
+verify_outgoing =true
+}
+grpc {
+verify_incoming =false
+}
+internal_rpc {
+verify_server_hostname =true
+}
+}
+auto_encrypt {
+allow_tls =true
+}
+#Telemetry
+telemetry {
+prometheus_retention_time ="480h",
+disable_hostname =true
+}HashiCorp | Validated Designs 20
+
+=== Page 22 ===
+Consul: Solution Design Guide 20 April 2026
+3.3 ConsulonKubernetes
+Preparing your Kubernetes environment to successfully deploy and run Consul is an important first
+step in your production deployment process. This solution will help you prepare your AWS Elastic
+Kubernetes Service (EKS). Since Consul servers are responsible for maintaining the datacenter state,
+server sizing is critical for overall performance, efficiency, and health of the Consul datacenter.
+There are many possible configurations for running Consul on Kubernetes.
+1.Consul servers deployed outside of Kubernetes and clients (catalog sync/consul-dataplane)
+inside kubernetes ( this is the recommended pattern ).
+2.Consul servers (control plane) and clients (catalog sync/consul-dataplane) can be entirely
+within Kubernetes ( not recommended ).
+3.4 Kubernetesdeploymentarchitecture
+As a pre-requisite, ensure consul servers are up and running on VM as per recommendation
+above.
+The below values .yaml file shows how to configure the Helm chart to install Consul so that it joins
+that existing Consul server cluster.
+global :
+enabled :false
+externalServers :
+enabled :true
+hosts : [< consul server DNS,IPorexec =string >]
+k8sAuthMethodHost :'https ://kubernetes .example .com:443 '
+Service discovery with Consul on Kubernetes requires Catalog Sync , refer to the operating guide
+for detailed implementation of Catalog Sync . Here is the architecture diagram for this use-case.
+HashiCorp | Validated Designs 21
+
+=== Page 23 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 6: consul EKS architecture
+HashiCorp | Validated Designs 22
+
+=== Page 24 ===
+Consul: Solution Design Guide 20 April 2026
+For service mesh use-case, with the introduction of Consul Dataplane , Consul installation on Ku-
+bernetes is simplified by removing the Consul Client agents. This requires the Helm installation
+and rest of the consul-k8s components installed on Kubernetes to talk to Consul Servers directly
+on various ports. Before starting the installation, ensure that the Consul Servers are configured to
+have the gRPC port enabled 8502/ tcpusing the ports .grpc = 8502 configuration option. Here
+is the architecture diagram for this use-case.
+HashiCorp | Validated Designs 23
+
+=== Page 25 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 7: consul EKS architecture
+HashiCorp | Validated Designs 24
+
+=== Page 26 ===
+Consul: Solution Design Guide 20 April 2026
+3.5 Componentcompatibility
+Component Name Supported Implementation Technologies and Versions
+Platform Kubernetes AWS Elastic Kubernetes
+Service (EKS); Managed Node
+group; 1.27
+Consul Enterprise Version Linux Binary Latest Consul Enterprise
+version - consul_1.16.X+ent
+Object Storage S3 compatible AWS S3 - Consul Snapshot
+backups
+Key Management KMS AWS KMS - Initial secrets and
+certs storage
+Load Balancer NLB or ALB AWS Network Load Balance
+(NLB) - Layer 4 LB; AWS
+Application Load Balancer
+(ALB) - Layer 7 LB
+Secret Manager AWS SSM AWS Secrets Manager
+3.6 Sizingguidelines
+The Consul server nodes process all read and write operations from the agents as well as maintain a
+consensus among the cluster, and as such are I/O bound for writes and CPU bound for reads. This
+needs to be taken into consideration and monitoring put in place to adjust as required depending
+on the type of workload inside of the cluster.
+Workloads on virtual machines require Consul client agents for service discovery and service mesh.
+So the following guidelines are based on that requirement.
+As a general rule, we recommend that the maximum size for a single datacenter is 5,000 Consul
+client agents. This estimate is based on impact of recovery time, write and read requests, and other
+factors. We recommend deploying read replicas for improved scalability in clusters that are read-
+heavy. We have customers who have scaled Consul to tens of thousands of agents per cluster, but
+HashiCorp | Validated Designs 25
+
+=== Page 27 ===
+Consul: Solution Design Guide 20 April 2026
+it is highly dependent on the read and write workloads of the cluster. As such, customers must
+optimize for stability at the gossip layer as the cluster scales. The two main factors that affect this
+with client agent are:
+1.Total size of the gossip pool
+2.The churn of nodes/agents in the pool
+3.6.1 ControlplaneonVMs
+We recommend deploying at a minimum the following types of instances for the Consul Servers.
+These are broken down into Initial and Large clusters. We recommend starting with the Initial cluster
+size and once adoption occurs, vertically scaling the servers to the Production Cluster size.
+HashiCorp | Validated Designs 26
+
+=== Page 28 ===
+Consul: Solution Design Guide 20 April 2026
+AWS
+SizePotential
+Instance
+Type CPU MemoryDisk
+Capacity Disk IO
+Initial m5.large 2 8 min: 100
+GB (gp3)min: 3000
+IOPS
+Small m5.xlarge 4 16 min: 100
+GB (gp3)min: 3000
+IOPS
+Large m5.2xlarge 8 32 min: 200
+GB (gp3)min: 7500
+IOPS
+Extra-Large m5.4xlarge 16 64 min: 200
+GB (gp3)min: 7500
+IOPS
+GCP
+SizePotential
+Instance
+Type CPU MemoryDisk
+Capacity Disk IO
+Initial n2-
+standard-22 8 min: 100
+GB (pd-
+balanced)min: 3000
+IOPS
+Small n2-
+standard-44 16 min: 100
+GB (pd-
+balanced)min: 3000
+IOPS
+Large n2-
+standard-88 32 min: 200
+GB (pd-ssd)min: 7500
+IOPS
+Extra-Large n2-
+standard-1616 64 min: 200
+GB (pd-ssd)min: 7500
+IOPS
+Azure
+SizePotential
+Instance
+Type CPU MemoryDisk
+Capacity Disk IO
+Initial Standard_D2s_v3 2 8 min: 100
+GB
+(Premium
+SSD)min: 3000
+IOPS
+Small Standard_D4s_v3 4 16 min: 100
+GB
+(Premium
+SSD)min: 3000
+IOPS
+Large Standard_D8s_v3 8 32 min: 200
+GB
+(Premium
+SSD)min: 7500
+IOPS
+Extra-Large Standard_D16s_v3 16 64 min: 200
+GB
+(Premium
+SSD)min: 7500
+IOPSHashiCorp | Validated Designs 27
+
+=== Page 29 ===
+Consul: Solution Design Guide 20 April 2026
+The above architecture will support a high level of agents based clients, but we highly recommend
+that if a single datacenter in the above architecture is provisioned, that customers monitor cluster
+metrics to both establish a baseline and set threshold levels.
+3.7 ControlplaneonKubernetes
+Use the CPU and memory recommendations to set resource limits for the Consul pods, and apply
+the disk recommendations when configuring persistent volumes. Both limits and requests should
+be set in the Helm chart. Below is an example Helm configuration snippet for deploying a Consul
+server in a large environment.
+server :
+resources : |
+requests :
+memory :"32Gi"
+cpu:"8"
+limits :
+memory :"32Gi"
+cpu:"8"
+storage : 200 Gi
+HashiCorp recommends monitoring your production deployment to take data-driven informed de-
+cisions to scale your production server resource limits or vertically scale the VM deployments.
+3.8 Rolesandresponsibilities
+Requirements and recommendations for operating a secure Consul deployment may vary dras-
+tically depending on your intended workloads, operating system, and environment. This section
+will provide architecture recommendations to meet the technical requirements of your organiza-
+tion and deploy Consul to meet the requirements. This section defines the roles required from the
+participants, and includes authority and access needs to the working environment.
+3.8.1 Personnel
+Focusing on the deployment activity alone, we recommend enlisting a project leader and a Cloud
+administration team. A project leader primarily coordinates events, facilitates resources and assigns
+HashiCorp | Validated Designs 28
+
+=== Page 30 ===
+Consul: Solution Design Guide 20 April 2026
+duties to the Cloud administration team.
+Members of the Cloud administration team carry out functional tasks to install Consul Enterprise.
+For Cloud administrators, we make assumptions about general knowledge of the following:
+•Cloud architecture and administration
+•Administration-level experience with Linux
+•Peripheral awareness of Docker
+•Practical knowledge of Terraform
+In addition, we strongly recommend requesting assistance from a Security Operations team. The
+emphasis is on integrating formal security controls required for services hosted in your preferred
+cloud environment.
+Finally, it is essential to specify a role for the infrastructure automation team who will take over the
+deployment at the end of this exercise.
+Persona Title Role Description Responsibilities
+Platform/Infrastructure
+EngineerDefine & implement the
+infrastructure decisions.Manages Consul Service
+discovery and Service Mesh
+platform.
+Security Engineer/Architect Define and implement security
+framework in the platformManage security policies,
+access control, secrets and
+authorization policies.
+Developer Write codes and maintain
+applications.Implements
+service-to-service
+communications and
+maintains deployment
+definitions.
+3.8.2 Access
+The installation team requires administrative access to various resources to install and configure
+Consul Enterprise including:
+HashiCorp | Validated Designs 29
+
+=== Page 31 ===
+Consul: Solution Design Guide 20 April 2026
+•Compute/storage : compute instances, Kubernetes clusters, object storage
+•Network : VPC, firewalls, load balancer, etc.
+•TLS certificates : Load balancer security
+•Identity : AWS IAM, AAD, Cloud IAM, etc.
+•Secrets management and data encryption key management : AWS Secrets Manager, Azure
+KeyVault, Cloud Key Management, etc.
+3.9 Sharedservices
+The detailed design section covers the Control plane deployment architecture on AWS EC2 VM and
+on AWS EKS (Kubernetes). This segregates the architecture design in two separate sections. We
+have shared underlying infrastructure that can span across Control plane architecture and multi-
+platform client deployments on AWS EC2 VM’s or on the AWS EKS (Kubernetes).
+Shared services design decision covers the element that spans across multi-platform Consul de-
+ployment and allows users to correctly configure security groups (firewall rules) correctly to allow
+Consul DNS work properly, configure consul security which spans across Consul Admin partitions
+or Consul cluster peers. This section also covers Consul monitoring to implement the correct
+telemetry for the required use-cases.
+3.9.1 DNS
+For Consul Clients to be able to register services to the Consul Cluster, as well as utilize the cluster
+for Service Discovery and DNS requests, DNS Forwarding will need to be implemented within
+AWS.
+There are multiple ways to forward DNS; BIND, iptables, and dnsmasq to name a few from a system
+level. However, it is recommended to implement DNS forwarding at a higher level, and we have
+two recommendations for AWS customers.
+The first recommendation, for customers who are leveraging Cloud Native architectures, and uti-
+lizing Amazon DNS, is to establish an outbound Route53 resolver to point to the DNS service of
+Consul (by default, port 8600). The Amazon DNS resolver is the .2 address of the VPC CIDR block.
+All DNS requests will be sent to this .2 address for resolution and if needed forwarded onto other
+Name Servers for query resolution. A Route53 resolver rule to forward all Consul resolution requests
+HashiCorp | Validated Designs 30
+
+=== Page 32 ===
+Consul: Solution Design Guide 20 April 2026
+should be configured on the Route53 resolver to allow agents and other clients to send queries to
+the Consul Control plane.
+The Route53 Resolver Rule will be associated with a Route53 Outbound Resolver Endpoint, and this
+rule can also be applied to multiple VPCs. You may want to have a Route53 Outbound Endpoint
+local to every VPC with individual rules for management. However, we recommend centralizing
+the Endpoints in the Consul VPC. This will allow clients to utilize the endpoints in different VPCs
+within the same AWS Account that the Consul Control Plane is deployed into, as well as allow you
+to share the Route53 Resolver rule with additional accounts in your AWS Organization with AWS
+Resource Access Manager (RAM). By sharing the Resolver rule, as well as having reachability to the
+Consul Control Plane VPC (via Transit Gateway, VPN, VPC-peering, etc), all VPCs can send traffic
+to the Route53 Outbound Resolver Endpoints to forward onto the Consul domain. An example of
+this traffic flow is shown below:
+Figure 8: Consul DNS
+HashiCorp | Validated Designs 31
+
+=== Page 33 ===
+Consul: Solution Design Guide 20 April 2026
+Alternatively, if you are using another DNS service within your VPC (specified by setting the DHCP
+Option Set of the VPC), they should ensure that they are forwarding traffic appropriately within these
+systems. Examples of this could be, for example, utilizing Microsoft DNS, InfoBlox, or similar DNS
+software. These systems should be configured to forward requests related to Consul to the DNS
+service port of the cluster.
+3.9.2 Security
+Consul has various means of encrypting communication between nodes and components within
+the cluster. TLS Certificates are utilized to ensure secure Remote Procedure Calls (RPC) between
+clients and servers. We recommend securing all communication between agents, servers, and
+other components via mutual TLS (mTLS) for RPC traffic. Finally, Gossip encryption is used to
+safeguard communication between Consul agents through the use of a shared symmetric key.
+Consul requires certificates for various interfaces (HTTPS, gRPC, internal RPC) to be signed by
+one or more verifiable Certificate Authorities (CAs). There may be occasions that you would want
+to use a public CA for HTTPS and gRPC interfaces for public access to the Control Plane, and
+a private CA for internal RPC interfaces. However, we recommend that this Certificate Authority
+(CA) be a dedicated private CA for all interfaces. This is to ensure that only dedicated systems
+can communicate with Consul, and the Consul Control Plane remains within your network, limiting
+access external from the Data Center it runs in unless utilizing Consul Peering. Multiple CAs can
+be introduced at a future time if needed, such as for public access as previously mentioned, or for
+migration from one CA to another for agents.
+Note
+The Certificate Authority (CA) configured on the internal RPC interface (either explicitly by
+tls.internal_rpc or implicitly by tls.defaults) should be a private CA, not a public one. We
+recommend using a dedicated CA which should not be used with any other systems. Any
+certificate signed by the CA will be allowed to communicate with the cluster.
+HashiCorp | Validated Designs 32
+
+=== Page 34 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 9: consul service discovery CA
+HashiCorp | Validated Designs 33
+
+=== Page 35 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 10: consul ca
+If you do not currently have access to a Vault cluster, ensure that you leverage your organization’s
+PKI process to provision certificates for the Servers and clients (note in this case, the certificate for
+the Agents will also be utilized for the Gateway components). Currently Consul requires that root
+certificates are valid SPIFFE SVID Signing Certificates, and that the URI encoded in the SAN is the
+cluster identifier created at time of bootstrap with the “.consul”.
+HashiCorp | Validated Designs 34
+
+=== Page 36 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 11: consul service discovery CA
+HashiCorp | Validated Designs 35
+
+=== Page 37 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 12: Vault as Consul CA
+Note that for Control Plane, utilizing your internal CA is manageable for a Service Discovery and
+ServicerMesh use-case. For dataplane, we can use internal CA but must allow Consul to issue its
+own intermediate so it can generate its own certs under that chain.
+As such, utilizing automated methods to issue certificates (via Vault or Consuls Internal CA acting
+as intermediary) is the recommended approach. For example, as the use case moves from Service
+Discovery to Service Mesh, having a Vault cluster in place, or utilizing Consuls built in CA allows
+automatically managed Leaf certificates for Mesh and Client certificates.
+HashiCorp | Validated Designs 36
+
+=== Page 38 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 13: consul service Mesh CA
+HashiCorp | Validated Designs 37
+
+=== Page 39 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 14: Vault as Consul CA
+Only Consul controlplane have TLS configured with certificates containing the following SAN
+Fields.
+Consul type SAN format Note
+Client N/A All Consul clients should have
+unique names
+Server server .<datacenter >.<
+domain >; < node_name >.
+server .<datacenter >.<
+domain >Required as a standard SAN
+name across all Consul
+Servers; Used for WAN
+Federation via Mesh Gateways
+HashiCorp | Validated Designs 38
+
+=== Page 40 ===
+Consul: Solution Design Guide 20 April 2026
+The addition of a Common SAN name is due to configuration settings within the Consul cluster.
+Specifically, verify_server_hostname performs hostname verification on all outgoing connec-
+tions. This is a critical requirement that ensures that servers have this particular SAN in their cer-
+tificate which in turn ensures that a client cannot modify its configuration and restart as a server.
+You can set verify_incoming andverify_outgoing in interface specific stanzas, or as the default
+across all stanzas. You may want to do this to turn off incoming or outgoing verification at a protocol
+level.
+Consul Config Settings Details
+tls.defaults .verify_incoming Requires all incoming connections to use TLS.
+Valid for RPC and HTTPS API connectivity
+tls.defaults .verify_outgoing Requires all outgoing connections to use TLS.
+Applies to clients and servers
+tls.defaults .internal_rpc .
+verify_server_hostnameValidates that a server has a SAN name present
+with server .<datacenter >.<domain >.
+Prevents clients from becoming server agents.
+3.9.3 Secrets
+Consul requires a number of secrets for various components, including its certificates as outlined
+above. Those secrets are as follows:
+Type and purpose Format
+Gossip Key: Secures communication between
+agentsBase64 encoded 32 byte key
+Bootstrap Token: Management token with
+unrestricted privileges128-bit UUID
+Agent Token: Used for internal agent
+operations.128-bit UUID
+HashiCorp | Validated Designs 39
+
+=== Page 41 ===
+Consul: Solution Design Guide 20 April 2026
+Type and purpose Format
+DNS Token: Enables the agent to answer DNS
+queries about services and nodes.128-bit UUID
+Config File Service Registration Token:
+Registers services and checks from service and
+check definitions specified in configuration files
+or fragments passed to the agent using the
+-hclflag.128-bit UUID
+Snapshot Token: Interacting with snapshot
+artifacts by snapshot agent128-bit UUID
+API GW Token: Grants permissions for API GW
+review binding128-bit UUID
+Terminating GW Token: Grants permissions to
+register into the catalog and to forward traffic
+out of the mesh128-bit UUID
+Mesh GW Token: Grants permissions to
+register into the catalog and routing to other
+services in the mesh or to other mesh gateways128-bit UUID
+ESM Token: Grants permission to ESM to
+monitor third-party or external services.128-bit UUID
+Each token must have an associated Accessor ID and policy associated with it. We recommend
+utilizing an existing Vault cluster for creation and storage of these tokens. This will allow ease of
+rotation, management, and synchronization for operations teams. Configuring Vault to create the
+Consul tokens is outside the scope of this Design Guide, however more information can be found
+here.
+If you do not currently have access to a Vault cluster, and are following the Automated Implemen-
+tation guide below these will be created for you during implementation and stored in AWS Secrets
+Manager. We recommend utilizing Secrets Manager on AWS for storing initial secrets of the Cluster
+until they can be updated as access control can be implemented with KMS Policy for decryption
+of the secret as well as access control via AWS IAM.
+HashiCorp | Validated Designs 40
+
+=== Page 42 ===
+Consul: Solution Design Guide 20 April 2026
+In addition to creating the ACL Tokens for each of the components, and its corresponding Accessor
+ID, you will need to also associate policies with each secret. This will be covered in the Operations
+Guide.
+3.9.4 Monitoring
+Monitoring Consul is crucial to ensure the health, performance, and reliability of your service dis-
+covery and configuration management infrastructure. Monitoring helps you identify issues, trou-
+bleshoot problems, and proactively manage your Consul cluster.
+3.9.5 Metrics
+Consul can be configured to send telemetry data to a remote monitoring system. This allows you
+to monitor the health of agents over time, spot trends, and plan for future needs. You will need a
+monitoring agent and console for this.
+Consul supports the following telemetry agents:
+•prometheus
+•Circonus
+•DataDog (via dogstatsd)
+•StatsD (via statsd, statsite, telegraf, etc.)
+If you are using StatsD, you will also need a compatible database and server, such as Grafana,
+Chronograf, or Prometheus.
+Agent Telemetry can be enabled in the agent configuration file.
+telemetry {
+dogstatsd_addr ="localhost :8125 "
+disable_hostname =true
+}
+Consul on Kubernetes integrates with Prometheus and Grafana to provide metrics for Consul ser-
+vice mesh. The metrics available are:
+•Mesh service metrics
+•Mesh sidecar proxy metrics
+HashiCorp | Validated Designs 41
+
+=== Page 43 ===
+Consul: Solution Design Guide 20 April 2026
+•Consul agent metrics
+•Ingress, terminating, and mesh gateway metrics
+Prometheus annotations are used to instruct Prometheus to scrape metrics from Pods. Prometheus
+annotations only support scraping from one endpoint on a Pod, so Consul on Kubernetes supports
+metrics merging whereby service metrics and sidecar proxy metrics are merged into one endpoint.
+If there are no service metrics, it also supports just scraping the sidecar proxy metrics. Metrics for
+services in the mesh can be configured with the Helm values nested under connectInject.metrics .
+connectInject :
+metrics :
+defaultEnabled :true #bydefault ,this inherits from the value global .
+metrics .enabled
+defaultEnableMerging :true
+The Prometheus annotations specify which endpoint to scrape the metrics from. The annotations
+point to a listener on 0.0.0.0:20200 on the Envoy sidecar. You can configure the listener and the cor-
+responding Prometheus annotations using the following Helm values. Alternatively, you can specify
+the consul.hashicorp.com/prometheus-scrape-port and consul.hashicorp.com/prometheus-
+scrape-path Consul annotations to override them on a per-Pod basis:
+connectInject :
+metrics :
+defaultPrometheusScrapePort : 20200
+defaultPrometheusScrapePath :"/metrics "
+Consulagentmetrics
+Metrics from the Consul server Pods can be scraped with Prometheus by setting the field
+global.metrics.enableAgentMetrics to true. Additionally, one can configure the metrics retention
+time on the agents by configuring the field global.metrics.agentMetricsRetentionTime which
+expects a duration and defaults to “1m”. This value must be greater than “0m” for the Consul
+servers to emit metrics at all. As the Prometheus deployment currently does not support scraping
+TLS endpoints, agent metrics are currently unsupported when TLS is enabled.
+global :
+metrics :
+enabled :true
+enableAgentMetrics :true
+agentMetricsRetentionTime :"1m"
+HashiCorp | Validated Designs 42
+
+=== Page 44 ===
+Consul: Solution Design Guide 20 April 2026
+Gatewaymetrics
+Metrics from the Consul ingress, terminating, and mesh gateways can be scraped with Prometheus
+by setting the field global.metrics.enableGatewayMetrics to true. The gateways emit standard Envoy
+proxy metrics. To ensure that the metrics are not exposed to the public internet, as mesh and ingress
+gateways can have public IPs, their metrics endpoints are exposed on the Pod IP of the respective
+gateway instance, rather than on all interfaces on 0.0.0.0.
+global :
+metrics :
+enabled :true
+enableGatewayMetrics :true
+Further, we need to authorize the Consul telemetry collector service to get metrics from other ser-
+vice proxies. We create service intentions that authorize proxies to push metrics to the collector.
+3.9.6 Logs
+Consul logs to standard output which can be redirected in your startup/init/systemd unit file or
+to any file you choose. That said, there is also a -syslog command line flag and a corresponding
+enable_syslog configuration file option that will enable Consul to log to syslog as well.
+Additionally, you can specify the location of where you want the logs saved, the number of bytes
+that should be written to a log before it needs to be rotated, the duration a log should be written to
+before it needs to be rotated, and the maximum number of older log file archives to keep using the
+-log-file ,-log-rotate-bytes ,-log-rotate-duration and-log-rotate-max-files command line flags
+respectively.
+You can also connect to any running Consul instance with consul monitor to view operational log-
+ging at any level from err to trace.
+3.10 VM-basedtechnicalrequirements
+Table 4: Resource checklist for the AWS environment
+Consul on VMs checklist
+HashiCorp | Validated Designs 43
+
+=== Page 45 ===
+Consul: Solution Design Guide 20 April 2026
+Infrastructure
+EC2 compute instance running Linux Compute environment where Consul
+Enterprise agents run.
+EC2 Auto Scaling launch template A collection of parameters that support the
+instantiation of an EC2 instance by EC2 Auto
+Scaling Group rules.
+Networking
+DNS name A DNS hostname that resolves to the load
+balancer IP address in the local availability zone
+VPC Amazon Virtual Private Cloud where the
+service resides.
+Regional subnets Subnets are bound to one Availability Zone. We
+recommend a minimum of three subnets.
+Subnets are bound to one Availability Zone.
+Security groups Security Groups are applied at the Elastic
+Network Interfaces (ENI) of components inside
+of AWS. Used to control traffic inbound and
+outbound of the ENI
+Network Load Balancer The load balancer distributes incoming
+application traffic across multiple EC2
+instances.
+Amazon S3 object storage Amazon object storage service.
+IAM accounts AWS Identity or identities that have assigned
+privileges to manage, access and affect the
+infrastructure.
+Secrets manager Used to manage initial Consul secrets
+HashiCorp | Validated Designs 44
+
+=== Page 46 ===
+Consul: Solution Design Guide 20 April 2026
+Networking
+KMS key Generate an encryption key to apply encryption
+at rest for various AWS resources used to
+support Consul
+Logging S3 object storage to store logs and
+CloudWatch service to examine the logs.
+AWS SSM Allows remote SSH connectivity to private EC2
+instances. Requires SSM agent to be installed
+and IAM permissions granted to EC2 instance
+profile.
+3.10.1 Infrastructure
+Compute
+This current Solution Design guide will deploy the infrastructure per the designs presented in the
+Consul on VM AWS Architecture section (or the Consul on Kubernetes AWS Architecture section).
+HashiCorp Consul supports various Hardware Architectures and Operating Systems. You can find
+a complete list of supported installation platforms here. For purposes of this Solution Design Guide,
+while operating Consul Control Plane on VMs, we recommend utilizing a Linux distribution with an
+AMD64 architecture.
+In addition, as mentioned above in the recommended deployment architecture, we typically rec-
+ommend adopting Consul in two categories; an Initial deployment (to establish the technology and
+onboard towards adoption), followed by a scaled large deployment to support production opera-
+tions. While we are referring to a single deployment within this document, it is recommended that
+there also be a test environment to try out new features and functionality while adopting and grow-
+ing in maturity that is separate from the Production Consul cluster(s). These test clusters should
+remain in an Initial deployment size unless otherwise required to save on operational burden, costs,
+and resources. Please see the table below for recommended sizing guidance for the two types of
+deployment options.
+Networking
+HashiCorp | Validated Designs 45
+
+=== Page 47 ===
+Consul: Solution Design Guide 20 April 2026
+Consul solution guide deploys highly available architecture spans across 3 availability zones. A
+VPC configured with private subnets to deploy Consul control plane and gateway components on
+AWS EC2 VMs.
+AWS VPC configured with security groups, routes to communicate with in VPC and to transit gate-
+way for cross partition multi platform Service discovery and secure mesh communication require-
+ments.
+There will be two Load Balancers for AWS Network Load Balancers (NLB) in private subnets for
+internal mesh gateway traffic for cross VPC traffic. Also, deploying AWS Application Load Balancer
+in a public subnet for external Consul API gateway traffic.
+Privatenetwork
+We generally recommend that the Consul Control plane be deployed into Private Subnets. This
+reduces accessibility from outside of secure networks, and prevents accidental exposure and mis-
+configuration of the systems to be compromised from unauthorized access. Depending on your
+requirements, you may expose the Consul API with a Load Balancer in a Public Subnet to allow
+management of the Consul Cluster from the Internet. However, for purposes of this Solution Design
+Guide, we recommend that the Control Plane and access to it is located within Private Subnets.
+We also recommend that Consul be deployed in a centralized service VPC, with access to other
+VPCs via networking pathways (Transit Gateway, VPC Peering, Direct Connect Gateway, VPNs, etc).
+This will allow the Control Plane to map various segments of services to different Admin Partitions,
+and will allow for ease of scalability with future Cluster Peering, connecting multiple Consul Clusters
+together.
+Subnets
+To ensure high availability and fault tolerance against data center issues within AWS, it is recom-
+mended to deploy the Consul Control Plane across multiple subnets. Each subnet corresponds
+to an Availability Zone (AZ), with each Region having at least three AZs. Therefore, we suggest
+deploying two Consul Servers in a minimum of three AZs, resulting in six servers within a Virtual
+Private Cloud (VPC).
+Routing
+HashiCorp | Validated Designs 46
+
+=== Page 48 ===
+Consul: Solution Design Guide 20 April 2026
+To ensure optimal performance of Consul Service Discovery and, in a future stage, Consul Service
+Mesh, it is crucial to establish Layer 3 & Layer 4 network connectivity between all services that will
+utilize these features. Consul Agents register services from various locations within the network,
+while Consul Servers maintain registry information for service queries from clients. To facilitate this
+communication, Consul Agents must report node and service health to the Consul Cluster, with
+VM-based services requiring deployment on every computer node in the datacenter. This process
+is carried out via RPC (TCP 8300) and LAN Gossip (TCP/UDP 8301).
+To ensure routability between the VPC where the Consul Control Plane is deployed and the networks
+in which services are deployed, we recommend leveraging multiple AWS Services such as VPC
+Peering or Transit Gateway.
+Firewalls
+As mentioned above in Routing, Consul Server agents should have L3 network connectivity to
+Consul Client agents running in various networks. In addition, Consul has a number of ports that
+are used between various components. You must ensure that these are allowed between Consul
+components at various points of traffic policy enforcement (for example, the Operating System,
+Security Group, Network Access Control List, and Firewall Appliance levels):
+Name Port/Protocol Source Destination Description
+RPC 8300/TCP All agents (client
+& server)Server agents Used by servers
+to handle
+incoming
+requests from
+other agents.
+Serf LAN 8301/TCP &
+UDPAll agents (client
+& server)All agents (client
+& server)Used to handle
+gossip in the
+LAN. Required by
+all agents.
+HashiCorp | Validated Designs 47
+
+=== Page 49 ===
+Consul: Solution Design Guide 20 April 2026
+Name Port/Protocol Source Destination Description
+Serf WAN 8302/TCP &
+UDPServer agents Server agents Used by server
+agents to gossip
+over the WAN to
+other server
+agents. Only
+used in
+multi-cluster
+environments.
+HTTP/HTTPS 8500 &
+8501/TCPLocalhost of
+client or server
+agentLocalhost of
+client or server
+agentUsed by clients
+to talk to the
+HTTP API.
+HTTPS is
+disabled by
+default.
+DNS 8600/TCP &
+UDPLocalhost of
+client or server
+agentLocalhost of
+client or server
+agentUsed to resolve
+DNS queries.
+gRPC (Optional) 8502/8503/TCP Envoy Proxy Client agent or
+server agent that
+manages the
+sidecar proxies
+service
+registrationUsed to expose
+the xDS API to
+Envoy proxies.
+Disabled by
+default.; 8502 -
+Envoy to client
+xDS; 8503 -
+Dataplane to
+Consul Server
+and Peering
+Replication
+HashiCorp | Validated Designs 48
+
+=== Page 50 ===
+Consul: Solution Design Guide 20 April 2026
+Name Port/Protocol Source Destination Description
+Sidecar Proxy 21000-
+21555/TCPAll agents (client
+& server)Client agent or
+server agent that
+manages the
+sidecar proxies
+service
+registrationPort range used
+for automatically
+assigned sidecar
+service
+registrations.
+Figure 15: Consul Clients
+HashiCorp | Validated Designs 49
+
+=== Page 51 ===
+Consul: Solution Design Guide 20 April 2026
+Loadbalancing
+There will be two Load Balancers in front of Consul and its components. AWS Network Load
+Balancers (NLB) in a private subnet for Server and internal mesh gateway traffic for intra and inter-
+VPC traffic and AWS Application Load Balancer in a public subnet for external Consul API gateway
+traffic.
+Storage
+Backup requirements It is important to take regular backups (what we will notate as snapshots) of
+your Consul cluster to maintain the registry of services. Consul Snapshot Agent runs within your
+environment as a service or scheduled to operate a highly available process that automatically
+takes snapshots, rotates backups, and sends the files to Amazon S3. We recommend provisioning
+an S3 bucket to use as part of this design. The snapshots are atomic and point-in-time, and include
+common items maintained by the Consul servers including (but not limited to):
+•Key/Value Store Entries
+•Service Catalog Registrations
+•Prepared Queries
+•Sessions
+•Access Control Lists (ACLs)
+•Namespaces
+We recommend running the snapshot agent as a service (for example, with systemd) and utilize it
+as a long running process based on the RPO of your organization.
+Disasterrecovery
+Consul Enterprise allows Disaster Recovery of multiple servers as well as cluster recovery. Redun-
+dancy Zones, Automated Backups, and Cloud Service Provider backup methodologies all aim at
+increasing the resiliency of the cluster in terms of an outage. As Consul leverages the Raft con-
+sensus protocol, if a single failed server is recoverable, bringing it back online involves two options;
+bringing the failed server back online with the same IP address, or forcing the server to leave and
+bringing on a new server with a new IP address. Autopilot helps with this process by cleaning up
+dead servers (by default, a check is run every 200ms) such that new servers can be created via an
+immutable process with new IPs and Autopilot will remove the previously failed server for you.
+HashiCorp | Validated Designs 50
+
+=== Page 52 ===
+Consul: Solution Design Guide 20 April 2026
+In the event of a loss of quorum in the Consul cluster or a complete loss of the Consul cluster, the
+quickest path to remediation would be to add new servers and then proceed with manual recovery
+with peers.json and same is true for the Kubernetes Consul recovery with exception .
+Depending on the quorum size and number of failed servers, the recovery process will vary. In the
+event of complete failure it is beneficial to have a backup process .
+As such, utilizing backup mechanisms of AWS is recommended. At a minimum, the S3 bucket
+that snapshots are being stored into should be replicated to a different bucket. We recommend
+this replicated bucket to be in a different AWS region; while S3 is Highly Available within the region,
+this will also protect against a regional failure of the cluster.
+3.11 KubernetesBasedcontrolplanetechnicalrequirements
+Resource Checklist This resource checklist helps you prepare access to the resources required for
+the deployment. The checklist fits within a project plan and is used before the execution phase of
+your project.
+For each item listed below, we briefly describe its relevance for the deployment. The technical
+requirements section of this document provides precise details on each requirement and a com-
+prehensive description.
+Table 5: Resource checklist for the aws environment Consul on kubernetes checklist
+Infrastructure
+AWS EKS Managed Kubernetes where Consul Enterprise
+runs.
+EKS managed node groups Automate the provisioning and lifecycle
+management of the EC2 based node groups.
+Kubernetes manages the pod scheduling on
+the node group and autoscale based on the
+need.
+HashiCorp | Validated Designs 51
+
+=== Page 53 ===
+Consul: Solution Design Guide 20 April 2026
+Networking
+DNS name A DNS hostname that resolves to the load
+balancer IP address in the local availability zone
+VPC Amazon Virtual Private Cloud where the
+service resides.
+Regional subnets Subnets are bound to one Availability Zone. We
+recommend a minimum of three subnets.
+Subnets are bound to one Availability Zone.
+Security groups Security Groups are applied at the Elastic
+Network Interfaces (ENI) of components inside
+of AWS. Used to control traffic inbound and
+outbound of the ENI
+Network loadbalancer The load balancer distributes incoming
+application traffic across multiple EC2
+instances.
+Amazon S3 object storage Amazon object storage service.
+IAM accounts AWS Identity or identities that have assigned
+privileges to manage, access and affect the
+infrastructure.
+Secrets manager Used to manage initial Consul secrets
+KMS key Generate an encryption key to apply encryption
+at rest for various AWS resources used to
+support Consul
+Logging S3 object storage to store logs and
+CloudWatch service to examine the logs.
+AWS SSM Allows remote SSH connectivity to private EC2
+instances. Requires SSM agent to be installed
+and IAM permissions granted to EC2 instance
+profile.
+HashiCorp | Validated Designs 52
+
+=== Page 54 ===
+Consul: Solution Design Guide 20 April 2026
+Networking
+Helm Required to deploy Consul Enterprise on EKS.
+3.11.1 Infrastructure
+3.11.2 Compute
+We recommend using 2 EKS managed node groups for Control Plane (server agents) and Data
+Plane (client agents,service and Consul dataplane). This can be expanded further for monitoring
+stack and as per the organization’s requirements.
+Every managed node is provisioned as part of an Amazon EC2 Auto Scaling group that’s managed
+for you by Amazon EKS. Every resource including the instances and Auto Scaling groups runs
+within your AWS account. Each node group runs across multiple Availability Zones that we define
+as part of the solution design guide.
+•Consul Server agents are configured as part of consul_server managed node group and
+provided with specific input as per cluster compute guidance.
+•Consul Dataplane or services will be provisioned on consul_workload managed node groups
+as per the specified labels.
+Managed groups configuration requirements can be applied to terraform.tfvars variables to apply
+specific infrastructure requirements.
+•Pod sizing : Consul K8s has two recommendations. First, is to taint the servers node or create
+a separate node group to be only used by server agents (Both leader and non-voting servers
+agents) and secondly, the CPU and memory recommendations can be used when you select
+the resources limits for the Consul pods. The disk recommendations can also be used when
+selecting the resources limits and configuring persistent volumes. You will need to set both
+limits and requests in the Helm chart. Below is an example snippet of Helm configuration for
+a Consul server in a large environment.
+HashiCorp | Validated Designs 53
+
+=== Page 55 ===
+Consul: Solution Design Guide 20 April 2026
+server :
+resources : |
+requests :
+memory :"32Gi"
+cpu:"4"
+limits :
+memory :"32Gi"
+cpu:"4"
+storage : 50 Gi
+HashiCorp recommends monitoring your production deployment to make data-driven informed
+decisions to scale your production server resource limits or vertically scale the VM deployments in
+case of depleting VM CPU and memory resources. This will prevent common OOM-killed errors
+for server agents as they are resource intensive.
+•labels : labels are required to provision any new instances of Consul server agents or client
+agents or services in their respective node groups.
+•Taints : Server agents require dedicated nodes as they are heavy lifting the management of
+thousands of possible clients and services.
+3.11.3 Networking
+Privatenetwork
+We generally recommend that the Consul Control plane be deployed into Private Subnets. This
+reduces accessibility from outside of secure networks, and prevents accidental exposure and mis-
+configuration of the systems to be compromised from unauthorized access. Depending on your
+requirements, you may expose the Consul API with a Load Balancer in a Public Subnet to allow
+management of the Consul Cluster from the Internet. However, for purposes of this Solution Design
+Guide, we recommend that the Control Plane and access to it is located within Private Subnets.
+We also recommend that Consul be deployed in a centralized service VPC, with access to other
+VPCs via networking pathways (Transit Gateway, VPC Peering, Direct Connect Gateway, VPNs, etc).
+This will allow the Control Plane to map various segments of services to different Admin Partitions,
+and will allow for ease of scalability with future Cluster Peering, connecting multiple Consul Clusters
+together.
+HashiCorp | Validated Designs 54
+
+=== Page 56 ===
+Consul: Solution Design Guide 20 April 2026
+Subnets
+To ensure high availability and fault tolerance against data center issues within AWS, it is recom-
+mended to deploy the Consul Control Plane across multiple subnets. Each subnet corresponds
+to an Availability Zone (AZ), with each Region having at least three AZs. Therefore, we suggest
+deploying two Consul Servers in a minimum of three AZs, resulting in six servers within a Virtual
+Private Cloud (VPC).
+Routing
+To ensure optimal performance of Consul Service Discovery and, in a future stage, Consul Service
+Mesh, it is crucial to establish Layer 3 & Layer 4 network connectivity between all services that will
+utilize these features.
+To ensure routability between the VPC where the Consul Control Plane is deployed and the networks
+in which services are deployed, we recommend leveraging multiple AWS Services such as VPC
+Peering or Transit Gateway.
+Firewalls
+As mentioned above in Routing, Consul Server agents should have L3 network connectivity to
+Consul Client agents running in various networks. In addition, Consul has a number of ports that
+are used between various components. You must ensure that these are allowed between Consul
+components at various points of traffic policy enforcement (for example, the Operating System,
+Security Group, Network Access Control List, and Firewall Appliance levels):
+Name Port/Protocol Source Destination Description
+RPC 8300/TCP All agents (client
+& server)Server agents Used by servers
+to handle
+incoming
+requests from
+other agents.
+HashiCorp | Validated Designs 55
+
+=== Page 57 ===
+Consul: Solution Design Guide 20 April 2026
+Name Port/Protocol Source Destination Description
+Serf LAN 8301/TCP &
+UDPAll agents (client
+& server)All agents (client
+& server)Used to handle
+gossip in the
+LAN. Required by
+all agents.
+Serf WAN 8302/TCP &
+UDPServer agents Server agents Used by server
+agents to gossip
+over the WAN to
+other server
+agents. Only
+used in
+multi-cluster
+environments.
+HTTP/HTTPS 8500 &
+8501/TCPLocalhost of
+client or server
+agentLocalhost of
+client or server
+agentUsed by clients
+to talk to the
+HTTP API.
+HTTPS is
+disabled by
+default.
+DNS 8600/TCP &
+UDPLocalhost of
+client or server
+agentLocalhost of
+client or server
+agentUsed to resolve
+DNS queries.
+HashiCorp | Validated Designs 56
+
+=== Page 58 ===
+Consul: Solution Design Guide 20 April 2026
+Name Port/Protocol Source Destination Description
+gRPC (Optional) 8502/8503/TCP Envoy Proxy Client agent or
+server agent that
+manages the
+sidecar proxies
+service
+registrationUsed to expose
+the xDS API to
+Envoy proxies.
+Disabled by
+default.; 8502 -
+Envoy to client
+xDS; 8503 -
+Dataplane to
+Consul Server
+and Peering
+Replication
+Sidecar Proxy 21000-
+21555/TCPAll agents (client
+& server)Client agent or
+server agent that
+manages the
+sidecar proxies
+service
+registrationPort range used
+for automatically
+assigned sidecar
+service
+registrations.
+Loadbalancing
+Consul EKS deployments require IAM role for service accounts (IRSA) policy and role configuration
+for the AWS Load Balancer controller.
+All services that require a Load balancer need to specify it in the Helm definition and AWS Load
+Balancer Controller manager that provisions the required ELB.
+Solution design guide helps you provision the required service accounts, roles, and AWS Load
+Balancer Controller Manager.
+•Helm configuration - load balancer
+•ELB_IRSA
+•AWS Load Balancer Controller
+HashiCorp | Validated Designs 57
+
+=== Page 59 ===
+Consul: Solution Design Guide 20 April 2026
+Storage
+Storage requirements for the Consul server agents or client services will be managed by Amazon
+Elastic Block Store (Amazon EBS) Container Storage Interface (CSI) driver that allows Amazon EKS
+clusters to manage the lifecycle of Amazon EBS volumes for persistent volumes.
+EBS volume creation must be tagged with required resource tags withData Lifecycle policies to
+prevent from deleting the EBS volumes and snapshots.
+The Amazon EBS CSI driver isn’t installed when you first create a cluster. To use the driver, you must
+add it as an Amazon EKS add-on.For instructions on how to add it as an Amazon EKS add-on, see
+Managing the Amazon EBS CSI driver as an Amazon EKS add-on .
+•EBS CSI driver
+Disasterrecovery
+To recover a Consul on Kubernetes primary datacenter from a disaster or during a long term outage
+you will need:
+•A recent backup of Consul’s internal state store
+•A current backup of the Consul secrets
+Consul Enterprise enables you to run the snapshot agent within your environment as a service (Sys-
+temd) or scheduled through other means. Once running, the snapshot agent service operates as a
+highly available process that integrates with the snapshot API to automatically manage taking snap-
+shots, rotating backups, and sending backup files offsite to Amazon S3 (or another S3-compatible
+endpoint).
+ConfigureConsulsnapshotagent
+Terraform deployment configures the Consul snapshot agent definition values to meet the organi-
+zations Recovery Point Objective (RPO) requirements. Update the snapshot_intervalvalues in the
+TF auto.tfvars file to apply the changes. This will help you configure the S3 bucket of choice in a
+given region in terms of disaster recovery scenarios and configure a snapshot interval to meet the
+RPO requirement for the organization’s Service Level Agreement (SLA).
+HashiCorp | Validated Designs 58
+
+=== Page 60 ===
+Consul: Solution Design Guide 20 April 2026
+{
+"snapshot_agent ": {
+"token ":"",
+"datacenter ":"",
+"ca_file ":"",
+"ca_path ":"",
+"cert_file ":"",
+"key_file ":"",
+"tls_server_name ":"",
+"log": {
+"level ":"INFO ",
+"enable_syslog ":false ,
+"syslog_facility ":"LOCAL0 "
+},
+"snapshot ": {
+"interval ":"1h",
+"retain ": 30,
+"stale ":false ,
+"service ":"consul -snapshot ",
+"deregister_after ":"72h",
+"lock_key ":"consul -snapshot /lock ",
+"max_failures ": 3,
+"local_scratch_path ":""
+},
+"local_storage ": {
+"path ":"."
+},
+"aws_storage ": {
+"access_key_id ":"",
+"secret_access_key ":"",
+"s3_region ":"",
+"s3_bucket ":"",
+"s3_key_prefix ":"consul -snapshot ",
+"s3_server_side_encryption ":false ,
+"s3_static_snapshot_name ":""
+}
+}
+Helm configuration - Consul snapshot agent
+HashiCorp | Validated Designs 59
+
+=== Page 61 ===
+Consul: Solution Design Guide 20 April 2026
+# [Enterprise Only ]Values for setting upand running snapshot agents
+# (https ://consul .io/commands /snapshot /agent )
+#within the Consul clusters .They are required tobeco-located with Consul clients ,
+#sowill inherit the clients 'nodeSelector ,tolerations and affinity .
+server :
+snapshotAgent :
+caCert :null
+configSecret :
+secretKey :null
+secretName :null
+enabled :true
+interval :1h
+resources :
+limits :
+cpu:50m
+memory :50Mi
+requests :
+cpu:50m
+memory :50Mi
+Sharedservices
+Certificates
+Consul EKS deployment can enable TLS for Consul servers, clients, and allowable consul-k8s com-
+ponents. Enabling TLS will generate a certificate authority, and server and client certificates.
+HashiCorp recommends to provide certificates that have been signed by a single certificate author-
+ity (CA) and update them as part of Kubernetes or Vault secret to enable TLS for the cluster.
+The Helm configuration below enables TLS on the Consul cluster. More information regarding these
+configuration parameters can be found on the consul-helm repository .
+Enable TLS - helm configuration
+HashiCorp | Validated Designs 60
+
+=== Page 62 ===
+Consul: Solution Design Guide 20 April 2026
+tls:
+enabled :true
+enableAutoEncrypt :true
+serverAdditionalDNSSANs : []
+serverAdditionalIPSANs : []
+verify :true
+httpsOnly :true
+caCert :
+secretName :null
+secretKey :null
+caKey :
+secretName :null
+secretKey :null
+Secrets
+Consul Kubernetes (EKS) deployment requires all the above specified required secrets . If not pro-
+vided, Helm deployment will generate the secrets and update the Kubernetes secrets. If you specify
+Vault-as-backend, or provide your own secrets, you need to update the helm values for the Consul
+deployment.
+4 DeployingConsulusingTerraform
+HashiCorp offers a set of official Terraform modules to simplify the deployment of a Consul En-
+terprise environment that align with the requirements and standards outlined in this HashiCorp
+Validated Design (HVD).
+Tip
+HashiCorp Professional Services or one of our trusted partners can help accelerate your
+Consul Enterprise deployment with confidence. For more information, reach out to your
+HashiCorp account team.
+4.1 Platform-specificguidance
+Select the tab below for your cloud for further guidance.
+HashiCorp | Validated Designs 61
+
+=== Page 63 ===
+Consul: Solution Design Guide 20 April 2026
+AWS
+HashiCorp provides an official HVD module to deploy Consul Enterprise on AWS EC2 .
+GCP
+HashiCorp provides an official HVD module to deploy Consul Enterprise on GCP GCE .
+Azure
+HashiCorp provides an official HVD module to deploy Consul Enterprise on Azure VMs .
+By using this module, you can deploy a complete, end-to-end Consul Enterprise environment in
+your cloud account using Terraform.
+Note
+The steps provided offer a detailed, step-by-step method for installing Consul using this
+Terraform module. This method is intended for testing the module’s functionality and fa-
+miliarizing yourself with the design. We strongly recommend adapting these steps into a
+more controlled deployment process, such as using HCP Terraform, Terraform Enterprise, or
+integrating them into your existing CI/CD pipeline.
+Warning
+NEVER store Terraform state in a version control system or any other unprotected location.
+Terraform state files contain sensitive information and must be secured. For more informa-
+tion, refer to the Terraform documentation .
+While we have provided prescriptive best practices throughout this guide, we understand that each
+organization has unique requirements and constraints for infrastructure deployment. We have in-
+cluded different considerations for deploying Consul in your cloud environment within the context
+of this module. If the default variables don’t fully meet your needs, the module offers additional
+capabilities you may want to explore.
+4.2 Deploymentsequenceoverview
+1.Create the TLS certificate files.
+HashiCorp | Validated Designs 62
+
+=== Page 64 ===
+Consul: Solution Design Guide 20 April 2026
+2.Obtain the Consul Enterprise license file.
+3.Download the Consul CLI.
+4.Download the Terraform CLI.
+5.Set up your prerequisite resources.
+6.Configure your cloud credentials.
+7.Initialize your Terraform workspace.
+8.Enter the required variables into the module for deployment.
+9.Create a Terraform plan.
+10.Apply the Terraform plan.
+11.Verify that the cluster has been successfully created and is accessible.
+4.3 Preparation
+4.3.1 CreatetheTLScertificatefiles
+Generate a standard X.509 certificate to be installed on the Consul servers. Follow your organiza-
+tion’s process for creating a certificate that corresponds to the DNS record users will use to access
+Consul.
+You will need the following three files.
+•The certificate: consul -crt.pem
+•The certificate’s private key: consul -key.pem
+•The CA bundle file from the certificate authority: ca.pem
+Keep these files accessible, as they will be required later in the installation process.
+4.3.2 ObtaintheConsulEnterpriselicensefile
+Obtain the Consul Enterprise license file from your HashiCorp account team. This file includes a
+unique license key for your environment and will typically be named something like consul .hclic
+.
+Keep this file accessible, as it will be required later in the installation process.
+HashiCorp | Validated Designs 63
+
+=== Page 65 ===
+Consul: Solution Design Guide 20 April 2026
+4.3.3 DownloadandinstalltheConsulCLI
+Note
+This guide has been tested with Consul 1.19.2+ent.
+Install the Consul CLI for your platform. You can do it manually by downloading the appropiate bi-
+nary for your operating system, or using your preferred package manager. You can find instructions
+for the different options in here .
+4.3.4 DownloadandinstalltheTerraformCLI
+Note
+This guide has been tested with Terraform 1.9.6+ent.
+Install the Terraform CLI for your platform. You can do it manually by downloading the appropiate
+binary for your operating system, or using your preferred package manager. You can find instruc-
+tions for the different options in here .
+4.3.5 Configureyourcloudcredentials.
+Once you have downloaded the module, navigate to the examples/default/ directory. Use this as
+the base working directory during the installation process.
+HashiCorp | Validated Designs 64
+
+=== Page 66 ===
+Consul: Solution Design Guide 20 April 2026
+AWS
+Ensure the appropriate AWS credentials are configured and accessible to Ter-
+raform. Terraform can access credentials from the following sources.* Creden-
+tials file : Typically located at $HOME /.aws/credentials (or%UserProfile %\.aws
+\credentials on Windows). * Environment variables : - AWS_ACCESS_KEY_ID -
+AWS_SECRET_ACCESS_KEY -AWS_SESSION_TOKEN (if using an IAM role or temporary cre-
+dentials) - AWS_DEFAULT_REGION For detailed instructions on setting up AWS credentials
+for Terraform, refer to the Terraform AWS provider documentation .Make sure the credentials
+you use have the necessary permissions to perform the required actions in Terraform.
+GCP
+Ensure the appropriate credentials are set and accessible to Terraform.If you have GCloud
+CLI configured, you can run the following command to make your Google identity avail-
+able: bash gcloud auth application -default login You can also impersonate a ser-
+vice account if needed. For detailed documentation on how to configure Google Cloud
+credentials for Terraform, refer to the Terraform Google Provider documentation .
+Azure
+Ensure the correct Azure credentials are in place and accessible to Terraform by running az
+login with your assumed credentials.For complete details on how to configure Azure cre-
+dentials for Terraform, see the HashiCorp Terraform Azure provider documentation .Ensure
+that the credentials you will be using have sufficient permissions to perform the necessary
+actions that Terraform will be performing.
+4.4 Installation
+4.4.1 Setupyourprerequisiteresources
+This section outlines the necessary infrastructure resources required to successfully execute the
+Terraform modules. These prerequisites include both infrastructure components and the appropri-
+ate storage locations for certificates, credentials, and licenses.
+For more details about the required input variables, refer to the specific module’s documentation.
+HashiCorp | Validated Designs 65
+
+=== Page 67 ===
+Consul: Solution Design Guide 20 April 2026
+AWS
+HashiCorp provides an official HVD module to deploy Consul Enterprise on AWS EC2 .Before
+deployment, you need to set up the required infrastructure in AWS.1) A functional VPC with
+at least three public and three private subnets. 2) A Consul license stored in the AWS Se-
+crets Manager. - Store the content of the license file in a secret, using a name such as
+consul_license_text . The ARN of the secret will be used as an input to the Terraform
+module. 3) A TLS private key and certificate, valid for the fully qualified domain name in-
+tended for Consul, stored in the AWS Secrets Manager. - Store the TLS certificate, private
+key, and CA bundle as secrets using names like consul_agent_cert ,consul_agent_key ,
+andconsul_ca_cert .The ARNs of these secrets will be used as input variables for the
+Terraform module. 4) An S3 Bucket for snapshots. - Ensure the S3 bucket is not publicly ac-
+cessible and is encrypted. 5) SSH key name, already registered in AWS, to use for instance
+access. 6) An gossip encryption key for Consul. - You can use the Consul CLI’s consul
+keygen command to generate a gossip encryption key. 7) An initial management token in
+the UUID format. - You can generate an initial management token using the Linux/UNIX
+command uuidgen |tr"[:upper :]""[:lower :]".
+GCP
+HashiCorp provides an official HVD module to deploy Consul Enterprise on GCP
+GCE.Before deployment, you need to set up the prerequisite infrastructure in GCP:1. A
+GCP Project with required permissions. 2. A VPC with a subnet in a region with 3+ zones.
+3. TLS private key and certificate, valid for the fully qualified domain name (FQDN) used
+with Consul, uploaded in PEM format and base64 encoded as secrets to GCP Secrets
+Manager. 4. A Consul Gossip Encryption Key uploaded as a secret to GCP Secrets
+Manager. 5. A Consul license uploaded as a secret to GCP Secrets Manager. 6. A GCS
+bucket for backup snapshot storage. ::: {data-environment=tcolorbox data-environment-
+keyword=“colback=HexColorFFF9E8,colframe=HexColorFBEABF,coltitle=HexColor9E4B00,title=Note”}
+If it is not possible to have GCP project owner permissions, at least you will need per-
+missions to: * Create IAM service accounts for the project. * Create/Update compute
+resources. * Create/Update networking resources. * Create/Update secrets in Secrets
+Manager.
+Note
+If your network and subnetwork are in a different project than Compute instances, the Ter-
+raform module will need read permissions to get networking data from the other project.
+HashiCorp | Validated Designs 66
+
+=== Page 68 ===
+Consul: Solution Design Guide 20 April 2026
+Azure
+HashiCorp provides an official HVD module to deploy Consul Enterprise on Azure VMs .Before
+deployment, you will need to deploy the prerequisite infrastructure in Azure.1) An Azure re-
+source group. 2) A virtual network with a private subnet for the Consul instances. 3) An Azure
+Key Vault to store the prerequisite secret material. 4) A Consul license stored as a secret in
+the Azure Key Vault. - Store the base64-encoded contents of the Consul license file as a
+secret, naming it consul -license . 5) An gossip encryption key for Consul. - Generate a
+gossip encryption key using the consul keygen command in the Consul CLI. - Base64 en-
+code the key and store it as a secret named gossip -key. 6) A TLS private key and certificate,
+valid for the fully qualified domain name (FQDN) used with Consul, uploaded as secrets to
+the Azure Key Vault. - Upload the TLS certificate, private key, and CA bundle required for
+Consul’s FQDN to the Azure Key Vault, they also need to be base64 encoded and stored
+as secrets named consul_agent_cert ,consul_agent_key , and consul_ca_cert . 7) A
+storage account with an object container for Consul snapshot storage. - Store the primary
+access key of the storage account as a secret, using the name storage -account -key.
+:::
+4.4.2 InitializeyourTerraformworkspace
+Runterraform init to initialize your Terraform workspace. Review the output to confirm that all
+providers and modules have been successfully downloaded and that no errors are present before
+proceeding.
+4.4.3 Configurevariablesforthedeployment
+Note
+You can configure variables in the installation module’s terraform.tfvars file only after all pre-
+requisite resources are set up. Values from the prerequisites will need to be supplied to the
+Consul module.
+HashiCorp | Validated Designs 67
+
+=== Page 69 ===
+Consul: Solution Design Guide 20 April 2026
+AWS
+Create a file named terraform .tfvars in the examples /amazonlinux -internal -nlb-
+consul -primary /directory. Refer to the terraform .tfvars .example file for explanations
+of each variable, then populate your own file with the relevant values for your environment.
+GCP
+Create a file named terraform .tfvars in the examples /ubuntu -nlb-consul -primary /
+directory. Refer to the terraform .tfvars .example file for explanations of each variable,
+then populate your own file with the relevant values for your environment.
+Azure
+Create a file named terraform .tfvars in the examples /ubuntu -nlb-consul -primary /
+directory. Refer to the terraform .tfvars .example file for explanations of each variable,
+then populate your own file with the relevant values for your environment.
+4.4.4 CreateandapplytheTerraformplan
+In the example directory, generate a Terraform plan using the following command:
+terraform plan
+Review the output to understand the changes that will be made, then apply the changes with:
+terraform apply
+When prompted, type yesto confirm and proceed with the changes.
+HashiCorp | Validated Designs 68
+
+=== Page 70 ===
+Consul: Solution Design Guide 20 April 2026
+HashiCorp | Validated Designs 69
+
+=== Page 71 ===
+Consul: Solution Design Guide 20 April 2026
+4.4.5 Verifythattheclusterhasbeensuccessfullycreatedandisaccessible
+AWS
+Once the Terraform run completes successfully, you can find the IP addresses of your
+Consul servers through the AWS console or by using the following command, specifying
+the name of the created autoscaling group, such as production -consul -0.0.1 .shell
+aws ec2 describe -instances --instance -ids \$(aws autoscaling describe -
+auto -scaling -groups \ -- auto -scaling -group -name production -consul -0.0.1
+\ -- query "AutoScalingGroups [].Instances [].InstanceId "\ -- output text
+)\ -- query "Reservations [].Instances [].[ InstanceId ,PrivateIpAddress ,
+PublicIpAddress ]"\ -- output table To connect to an EC2 instance using SSH,
+replace the IP address with the IP of one of the instances returned from the previous
+command. shell ssh ec2-user@ <IP-ADDRESS >To configure the necessary environ-
+ment variables for Consul, set the following values within your SSH session on the EC2
+instance. shell export CONSUL_CACERT =/etc/consul .d/tls/consul -ca.pem export
+CONSUL_HTTP_ADDR =127.0.0.1:8501 export CONSUL_HTTP_SSL =true export
+CONSUL_HTTP_TOKEN =<aaaaaaaa -bbbb -cccc -dddd -eeeeeeeeeeee >To check the status
+of the raft peers in your Consul cluster and confirm the setup, run the following com-
+mand. shell consul operator raft list -peers With the recommended configuration,
+this command will display the status of the 6 Consul nodes in the cluster.
+GCP
+Once you have successfully deployed your Terraform configuration, you can view the IP
+addresses of the load balancer’s frontend either in the GCP console or by executing the
+following command: shell gcloud compute forwarding -rules list --filter ="
+name ~'consul -forwarding -rule '"By default, in the Terraform module, the load balancer
+is configured internally ( load_balancing_scheme ="INTERNAL "). To access the Consul
+cluster, you’ll need to use the internal IP address of the forwarding rule and connect to the
+VPC via VPN (using Cloud NAT) or through a bastion host. For external access, configure
+the Terraform module variable for the load balancer with load_balancing_scheme =
+"EXTERNAL "and use the public IP address of the forwarding rule.The Consul bootstrap
+token will be securely stored as a secret in GCP Secret Manager during deployment.
+You can retrieve it using the following command: shell gcloud secrets versions
+access latest --secret consul -consul -management -token You could set the
+following environment variables to interact with the Consul cluster: shell export
+CONSUL_HTTP_ADDR ="https ://$(gcloud compute forwarding -rules list --
+filter ="name ~'consul -forwarding -rule '"--format ="value (IPAddress )"):8501
+"export CONSUL_HTTP_TOKEN ="$(gcloud secrets versions access latest --
+secret consul -consul -management -token )"Also, if the CA certificate is not in your
+trusted store, you can access to the Consul CA certificate using the secret name used during
+the deployment: shell gcloud secrets versions access latest --secret consul
+-tls-ca-cert |base64 -d> /path /to/consul -ca.pemThe previous command
+saved the CA certificate as a .pem file. Now set the CONSUL_CACERT environment
+variable to point to its location. shell export CONSUL_CACERT =/path /to/consul -ca.
+pemNow, you can test that the Consul cluster is running and reachable by running. consul
+members You should now have a running cluster.You can also list and access server
+instances by retrieving their IP addresses using the following command: shell gcloud
+compute instances list --filter ="tags .items =consul -backend "
+Azure
+After the Terraform run completes successfully, you can retrieve the IP addresses of your
+Consul servers via the Azure portal or by running the following command, specifying
+the resource group and scaling set, such as consul -ent-rgand production -consul
+-agents .shell azvmss nic list \ -- resource -group consul -ent-rg\ --
+vmss -name production -consul -agents \ | jq-r'.[0]. ipConfigurations [0].
+privateIPAddress 'The initial Consul management token is auto-generated and stored
+in the Azure Key Vault under the secret name mgmt -token . Retrieve the token with this
+command. shell azkeyvault secret show \ -- vault -name "kv-servers -consul
+-${PREFIX }"\ -- name "mgmt -token "|jq-r.value To SSH into one of the Azure
+VMs, use the IP address from the previous step, substituting <IP-ADDRESS >with the actual
+IP .shell ssh azureuser@ <IP-ADDRESS >Within the SSH session on the VM instance,
+configure the following Consul environment variables. shell export CONSUL_CACERT =/
+etc/consul .d/tls/ca.pem export CONSUL_HTTP_ADDR =127.0.0.1:8501 export
+CONSUL_HTTP_SSL =true export CONSUL_HTTP_TOKEN =<aaaaaaaa -bbbb -cccc -dddd -
+eeeeeeeeeeee >To verify the status of raft peers in the Consul cluster, execute the following
+command. shell consul members With the recommended configuration, this command
+will display the status of the 6 Consul nodes in the cluster.HashiCorp | Validated Designs 70
+
+=== Page 72 ===
+Consul: Solution Design Guide 20 April 2026
+5 Usecases
+This guide uses the HashiCups as an example service applications registered on a Kubernetes
+deployment or pod and node with client agent to demonstrate the following use cases.
+5.1 Servicediscoveryandhealthmonitoring
+5.1.1 Registerclientnodeandhealthcheck
+You can register nodes by deploying client agent configuration in the config directory with TF mod-
+ules or with CLI and and start the client agents.
+HashiCorp | Validated Designs 71
+
+=== Page 73 ===
+Consul: Solution Design Guide 20 April 2026
+data_dir ="/etc/consul .d/consul -`hostname `"
+node_name ="consul -`hostname `"
+log_level ="${consul_log_level }"
+datacenter ="${consul_datacenter }"
+primary_datacenter ="${consul_primary_datacenter }"
+encrypt ="${gossip_encryption_key }"
+server =false
+license_path ="${consul_license_path }"
+enable_debug =true
+ui_config {
+enabled =true
+}
+partition ="partition -1"
+ports {
+serf_lan = 8302
+}
+client_addr ="0.0.0.0 "
+retry_join = ["provider =aws region =us-west -2tag_key =consul tag_value =consul "]
+connect {
+enabled =true
+}
+rpc {
+enable_streaming =false
+}
+advertise_addr ="$INTERNAL_IP_ADDRESS "
+#TLS config
+tls {
+defaults {
+verify_incoming =true
+verify_outgoing =true
+ca_file ="/etc/consul .d/tls/consul -ca.pem"
+ca_path ="/etc/consul .d/tls"
+cert_file ="/etc/consul .d/tls/consul -cert .pem"
+key_file ="/etc/consul .d/tls/consul -key.pem"
+}
+#overrides tls.defaults path ,ifspecified .
+https {
+verify_incoming =true
+verify_outgoing =true
+}
+grpc {
+verify_incoming =true
+}
+#Telemetry
+telemetry {
+dogstatsd_addr ="127.0.0.1:8125 "
+dogstatsd_tags = ["host -agent :consul -client "]
+prefix_filter = ["+consul .serf .member .flap ","+consul .serf .member .failed "]
+}HashiCorp | Validated Designs 72
+
+=== Page 74 ===
+Consul: Solution Design Guide 20 April 2026
+consul agent -config -dir=${CONSUL_CONFIG_DIR } > / tmp/consul -client .log 2>&1 &
+Consul also allows you to define node-level health-checks that are not tied to a specific service.
+These checks monitor the overall health of the node itself. Node-level health checks can be regis-
+tered separately:
+{
+"node ":"consul -`hostname `",
+"check ": {
+"script ":"/usr/local /bin/check -node -health .sh",
+"interval ":"30s"
+}
+}
+Here, a script-based health check runs every 30 seconds to check the health of the “consul-
+hostname ”.
+5.1.2 Registerserviceandhealthchecks
+To register a service in Consul, you typically use the consul services register command or by
+making an HTTP PUT request to the Consul agent’s HTTP API. Service definition structure allows
+service health checks registered with service. Below are examples of both methods:
+•Using consul services register command, we register counting service and its tcp
+health-check:
+Product_db.json [VM]
+HashiCorp | Validated Designs 73
+
+=== Page 75 ===
+Consul: Solution Design Guide 20 April 2026
+{
+"service ": {
+"ID":"product_db ",
+"name ":"product_db ",
+"tags ": ["backend ","product_db "],
+"port ": 5432,
+"check ": {
+"id":"product_db_check ",
+"name ":"Check DBhealth 5432 ",
+"tcp":"localhost :5432 ",
+"interval ":"10s",
+"timeout ":"1s"
+}
+}
+}
+consul services register prodct_db .json
+•We can also register a service by making an HTTP PUT request to the Consul agent’s API
+endpoint. Once the definition is saved you can register the dashboard service and HTTP
+health-check by running:
+curl --request PUT --data @product_db .json http ://127.0.0.1:8500/ v1/agent /service /
+register
+•Using Iaac approach using client agents, service definition files can be placed on disk that
+Consul can reload during agent start or with consul reload command.
+5.1.3 Registerexternalservicewithservicediscovery
+Consul enables the registration and discovery of services internal to your infrastructure as well as
+external services: third-party SaaS services, and services running in other environments where it
+is not possible to run the Consul agent directly.
+External services run on nodes where you cannot run a local Consul agent. These nodes might be
+inside your infrastructure (e.g. a mainframe, virtual appliance, or unsupported platform) or outside
+of it (e.g. a SaaS platform).
+Because external services by definition don’t have a local Consul agent, you can’t register them
+with that agent or use it for health checking. Instead, you must register them directly with the
+catalog using the /catalog /register endpoint. We can use the /catalog/register endpoint for
+HashiCorp | Validated Designs 74
+
+=== Page 76 ===
+Consul: Solution Design Guide 20 April 2026
+registering external services or nodes but with skip_node_update to the API will not modify the
+node registration and assign specific service and checks to the existing node.
+Typically external services are registered via nodes dedicated for that purpose so we’ll continue our
+example using the Consul dev agent (localhost) as if it were running on a different node (e.g. “Ex-
+ternal Services”) from the one where our internal web service is registered.
+Figure 16: ESM
+Use a PUT request to register the external service.
+HashiCorp | Validated Designs 75
+
+=== Page 77 ===
+Consul: Solution Design Guide 20 April 2026
+{
+"Node ":"hashicorp ",
+"Address ":"learn .hashicorp .com",
+"NodeMeta ": {
+"external -node ":"true ",
+"external -probe ":"true "
+},
+"Service ": {
+"ID":"learn1 ",
+"Service ":"learn ",
+"Port ": 80
+},
+"Checks ": [
+{
+"Name ":"http -check ",
+"status ":"passing ",
+"Definition ": {
+"http ":"https ://learn .hashicorp .com/consul /",
+"interval ":"30s"
+}
+}
+]
+}
+curl --request PUT --data @external .json localhost :8500/ v1/catalog /register
+External service can be monitored with Consul ESM (External Services Monitor) that runs as a
+daemon alongside Consul in order to health check external nodes and update their status in the
+catalog.
+Diagram shows how Consul ESM works with Consul to monitor the health of external services:
+HashiCorp | Validated Designs 76
+
+=== Page 78 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 17: ESM2
+5.2 Servicemeshandgateways
+5.2.1 SecureservicecommunicationwithConsulservicemeshandEnvoy
+Consul service mesh secures service-to-service communication with authorization and encryption.
+Applications can use sidecar proxies in a service mesh configuration to automatically establish TLS
+connections for inbound and outbound connections without being aware of the network configu-
+ration and topology. In addition to securing your services, Consul service mesh can also intercept
+data about service-to-service communications and surface it to monitoring tools.
+We will register two services and their sidecar proxies in the Consul catalog and then start the ser-
+vices and sidecar proxies. Finally, we will demonstrate that the service-to-service communication
+is going through the proxies by stopping traffic with an “ intention ”.
+HashiCorp | Validated Designs 77
+
+=== Page 79 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 18: intentions
+5.2.2 Connectservicesoutsidetheservicemesh
+The simplest use case for terminating gateways is routing to external services in the same logical
+network as the Consul service mesh.
+A managed service, such as Amazon RDS or a third-party service, that needs to be integrated into
+the service mesh. In this scenario, you will not be able to install Consul on the machine and you
+will only be able to access the service via the endpoint(s) it exposes.
+In these situations, given the heterogeneous nature or location of these services, the gateways
+and the external services would be registered in the same Consul datacenter catalog. Traffic from
+services in the mesh would flow through their sidecar to the terminating gateway. The gateway will
+then forward the traffic, potentially unencrypted, to the destination service.
+HashiCorp | Validated Designs 78
+
+=== Page 80 ===
+Consul: Solution Design Guide 20 April 2026
+To terminate TLS connections, the terminating gateway will present leaf certificates for the services
+it represents. Internal mesh traffic to the gateway will be encrypted with mTLS and controlled by
+intentions as expected with Consul service mesh. Intentions reference the source and destination
+services and do not require knowledge of the gateway itself.
+The routing between gateways and external services is determined by the terminating -gateway
+configuration entry. The configuration is associated with the name of a gateway service and will
+apply to all instances of gateways with that name across all federated Consul datacenters.
+Figure 19: Terminating Gateways
+HashiCorp | Validated Designs 79
+
+=== Page 81 ===
+Consul: Solution Design Guide 20 April 2026
+Update helm chart with minimum required configuration to install terminating gateways.
+global :
+name :consul
+terminatingGateways :
+enabled :true
+Registering the external services with Consul is a multi-step process:
+•Register external services with Consul using ServiceDefaults , ifTransparentProxy is en-
+abled. Otherwise, you register the service as a node in the Consul catalog. Example below
+configure ServiceDefaults to register AWS RDS postgres instance with Consul Service
+Mesh.
+apiVersion :consul .hashicorp .com/v1alpha1
+kind :ServiceDefaults
+metadata :
+name :example -rds
+spec :
+protocol :tcp
+destination :
+addresses :
+-"consul53 .test .us-west -2.rds.amazonaws .com"
+port : 5431
+•Update the terminating gateway ACL token if ACLs are enabled. Update the terminating
+gateway ACL role to have service:write permissions on all of the services being represented
+by the gateway.
+Create a new policy that includes the write permission for the service you created.
+service "example -rds"{
+policy ="write "
+}
+Apply terminating gateway write -policy .hcland create ALC role.
+HashiCorp | Validated Designs 80
+
+=== Page 82 ===
+Consul: Solution Design Guide 20 April 2026
+$consul acl policy create -name "example -rds-write -policy "-rules @write -policy .hcl
+#Obtain the IDofthe terminating gateway role .
+$consul acl role list -format =json |jq--raw-output '[.[] |select (.Name |endswith
+("-terminating -gateway -acl-role "))]|if(.|length )==1then (.|first |.ID)
+else "Unable todetermine the role IDbecause there are multiple roles matching
+this name .\n"|halt_error end'
+<role_id >
+#Update the terminating gateway ACL role with the new policy .
+$consul acl role update -id<role id> -policy -name example -rds-write -policy
+•Create a TerminatingGateway resource to configure the terminating gateway after acl role
+update.
+#terminating -gateway .yaml
+apiVersion :consul .hashicorp .com/v1alpha1
+kind :TerminatingGateway
+metadata :
+name :terminating -gateway
+spec :
+services :
+-name :example -rds
+•Create a ServiceIntentions resource to allow access from services in the mesh to external
+service.
+apiVersion :consul .hashicorp .com/v1alpha1
+kind :ServiceIntentions
+metadata :
+name :example -rds
+spec :
+destination :
+name :example -rds
+sources :
+-name :api
+action :allow
+5.2.3 APIgateway-controlaccessintoservicemesh
+Consul API Gateway is a dedicated ingress solution for intelligently routing traffic to applications
+on your Consul service mesh. This provides a consistent method for handling inbound requests to
+HashiCorp | Validated Designs 81
+
+=== Page 83 ===
+Consul: Solution Design Guide 20 April 2026
+the service mesh from external clients.
+Consul API Gateway takes all API calls from clients, then routes them to the appropriate service
+with request routing, composition, and protocol translation. Once Consul API Gateway becomes
+available for your services, you can use it for ingress, load balancing, modifying HTTP headers, and
+splitting traffic between multiple services based on weighted ratios.
+Consul API Gateway can be enabled by defining the API gateway in the ConnectInject stanza as
+specified in consul server helm file.
+Consul server helm
+HashiCorp | Validated Designs 82
+
+=== Page 84 ===
+Consul: Solution Design Guide 20 April 2026
+global :
+name :consul
+image :"hashicorp /consul -enterprise :1.16. X-ent"
+datacenter :default
+adminPartitions :
+enabled :true
+name :"default "
+acls :
+manageSystemACLs :true
+enableConsulNamespaces :true
+enterpriseLicense :
+secretName :consul -enterprise -license
+secretKey :license
+enableLicenseAutoload :true
+peering :
+enabled :true
+tls:
+enabled :true
+server :
+replicas : 3
+bootstrapExpect : 3
+exposeService :
+enabled :true
+type :LoadBalancer
+extraConfig : |
+{
+"log_level ":"TRACE "
+}
+syncCatalog :
+enabled :true
+k8sAllowNamespaces : ["*"]
+consulNamespaces :
+mirroringK8S :true
+connectInject :
+enabled :true
+transparentProxy :
+defaultEnabled :false
+consulNamespaces :
+mirroringK8S :true
+k8sAllowNamespaces : ['*']
+k8sDenyNamespaces : []
+apiGateway :
+managedGatewayClass :
+serviceType :LoadBalancer
+meshGateway :
+enabled :true
+replicas : 3
+service :
+enabled :true
+type :LoadBalancer
+controller :
+enabled :true
+ui:
+enabled :true
+service :
+enabled :true
+type :LoadBalancerHashiCorp | Validated Designs 83
+
+=== Page 85 ===
+Consul: Solution Design Guide 20 April 2026
+DeployAPIgateway
+A complete API Gateway deployment consists of an API Gateway configuration and a routing con-
+figuration. It consists of multiple components that enable external traffic into your Consul service
+mesh. The configuration file specifies how Consul API Gateway will handle API calls from clients
+and how it will route them to the respective services with request routing, composition, and protocol
+translation.
+consul -api-gateway .yaml
+apiVersion :gateway .networking .k8s.io/v1beta1
+kind :Gateway
+metadata :
+name :api-gateway
+namespace :consul
+spec :
+gatewayClassName :consul
+listeners :
+#options :HTTP orHTTPS
+-protocol :HTTP
+#options : 80 or443 orcustom
+port : 80
+name :http
+allowedRoutes :
+namespaces :
+#options :All orSame orSpecific
+from :All
+This configuration file also defines other objects needed for the deployment of the Consul API
+Gateway, such as ReferenceGrant ,ClusterRoleBinding andClusterRole . The reference grant
+lets API Gateway route traffic to services in different namespaces, and the RBAC ClusterRole objects
+let the API gateway interact with Consul datacenter resources.
+#Apply consul -api-gateway .yaml todeploy the gateway
+$kubectl apply --filename api-gw/consul -api-gateway .yaml
+#Verify the deployed gateway
+$kubectl get services --namespace =consul api-gateway
+#Export API gateway external loadbalancer DNS
+$export APIGW_URL =$(kubectl get services --namespace =consul api-gateway -ojsonpath =
+'{.status .loadBalancer .ingress [0]. hostname }') && echo $APIGW_URL
+Create API gateway ingress route for the Frontend service
+HashiCorp | Validated Designs 84
+
+=== Page 86 ===
+Consul: Solution Design Guide 20 April 2026
+Figure 20: api gateway
+HashiCorp | Validated Designs 85
+
+=== Page 87 ===
+Consul: Solution Design Guide 20 April 2026
+apiVersion :gateway .networking .k8s.io/v1beta1
+kind :HTTPRoute
+metadata :
+name :route -hashicups
+namespace :default
+spec :
+parentRefs :
+-name :api-gateway
+namespace :consul
+rules :
+-matches :
+-path :
+type :Exact
+value : /hashicups
+backendRefs :
+-kind :Service
+name :frontend
+namespace :default
+port : 3000
+filters :
+-type :URLRewrite
+urlRewrite :
+path :
+replacePrefixMatch : /
+type :ReplacePrefixMatch
+5.3 Appendix1:Adminpartitions
+Consul admin partitions give organizations the option to define tenancy boundaries for services
+using Consul. This can help organizations managing services across teams and business units.
+Teams can benefit from managing and customizing their own Consul environment, without im-
+pacting other teams, or other Consul environments.
+Some organizations want to allow organizational or business units to deploy their own installations
+of Consul Enterprise on their own Kubernetes clusters. Centrally managing multiple Consul installa-
+tions can be an operational challenge for organizations. Instead of giving teams their own clusters,
+the organization can consolidate these installations onto a shared multi-tenant server cluster. This
+cluster serves as the control plane for Consul clients in the tenant clusters, and ensures separation
+between tenants of the system. This deployment model provides teams the autonomy to configure
+Consul and application networking as they require. This increases the team’s flexibility to man-
+age application deployments, and eliminates the operational overhead associated with managing
+HashiCorp | Validated Designs 86
+
+=== Page 88 ===
+Consul: Solution Design Guide 20 April 2026
+individual server clusters.
+5.4 Appendix2:Kubernetescatalogsync
+To use catalog sync, you must enable it in the Helm chart . Catalog sync allows you to sync services
+between Consul and Kubernetes. The sync can be unidirectional in either direction or bidirectional.
+Refer to the operating guide to learn more about the configuration options.
+Services are synced from Kubernetes and non-Kubernetes to Consul service registry to make them
+discoverable, like any other service within the Consul datacenter. This service sync allows Kuber-
+netes services to use Kubernetes’ native service discovery capabilities to discover and connect to
+external services registered in Consul, and for external services to use Consul service discovery to
+discover and connect to Kubernetes services. Read more in the network connectivity section to
+learn more about related Kubernetes configuration. Services synced from Consul to Kubernetes
+are discoverable with the built-in Kubernetes DNS once a Consul stub domain is deployed. When
+bidirectional catalog sync is enabled, it behaves like the two unidirectional setups.
+5.5 Appendix3:Gossipprotocol
+Consul uses a gossip protocol to manage membership and broadcast messages to the cluster.
+The protocol, membership management, and message broadcasting is provided through the Serf
+library . The gossip protocol used by Serf is based on a modified version of the SWIM (Scalable
+Weakly-consistent Infection-style Process Group Membership) protocol .
+Consul uses a LAN gossip pool and a WAN gossip pool to perform different functions. The pools are
+able to perform their functions by leveraging an embedded Serflibrary. The library is abstracted and
+masked by Consul to simplify the user experience, but developers may find it useful to understand
+how the library is leveraged.
+5.6 Appendix4:SampleTerraformandhelmconfiguration
+5.6.1 Consulserver
+Terraform configuration
+HashiCorp | Validated Designs 87
+
+=== Page 89 ===
+Consul: Solution Design Guide 20 April 2026
+#Nodes tainted for running consul servers
+consul_server = {
+name ="consul_server "
+instance_types =var.consul_server_node_type
+min_size = 1
+max_size = 5
+desired_size =var.consul_server_node_count
+//Nodes only for consul server agents ;excluding other agents
+taints = {
+dedicated = {
+key ="consul_agent_type "
+value ="server "
+effect ="NO_SCHEDULE "
+}
+}
+labels = {
+consul_agent_type ="server "
+}
+}
+Resource requirement (helm)
+#Configure your Consul servers inthis section .
+server :
+#Specify three servers that wait until all are healthy tobootstrap the Consul
+cluster .
+replicas : 3
+#Specify the resources that servers request for placement .These values will serve
+alarge environment .
+resources :
+requests :
+memory :'32Gi'
+cpu:'4'
+disk :'50Gi'
+limits :
+memory :'32Gi'
+cpu:'4'
+disk :'50Gi'
+5.6.2 Consulclient
+Terraform configuration
+HashiCorp | Validated Designs 88
+
+=== Page 90 ===
+Consul: Solution Design Guide 20 April 2026
+#Nodes todeploy services and consul client
+consul_workload = {
+name ="consul_workload "
+instance_types =var.consul_workload_node_type
+min_size = 0
+max_size = 200
+desired_size =var.consul_workload_node_count
+labels = {
+app ="client -Data Plane "
+}
+}
+Resource requirement (helm)
+#Configure Consul clients inthis section
+client :
+#Specify the resources that clients request for deployment .
+resources :
+requests :
+memory :'8Gi'
+cpu:'2'
+disk :'15Gi'
+limits :
+memory :'8Gi'
+cpu:'2'
+disk :'15Gi'
+HashiCorp | Validated Designs 89
+
+=== Page 91 ===
+Consul: Solution Design Guide 20 April 2026
+5.6.3 Helmconfiguration-loadbalancer
+#ELB orClassic Load Balancer
+---
+global :
+name :consul
+datacenter :dc1
+ui:
+enabled :true
+service :
+type :LoadBalancer
+#NLB:Network Load Balancer
+---
+global :
+name :consul
+datacenter :dc1
+ui:
+enabled :true
+service :
+type :LoadBalancer
+ingress :
+enabled :true
+ingressClassName :alb
+hosts :
+-host :consul -ui.test .consul .domain
+annotations : |
+'alb.ingress .kubernetes .io/certificate -arn':'arn:aws:acm:us-east -2:01234
+xxxxxxx :certificate /f36b75c3 -xxxx -40ca-xxx-3a2fad7f419d '
+'alb.ingress .kubernetes .io/listen -ports ':'[{"HTTPS ":443}] '
+'alb.ingress .kubernetes .io/backend -protocol ':'HTTPS '
+'alb.ingress .kubernetes .io/healthcheck -path ':'/v1/status /leader '
+'alb.ingress .kubernetes .io/group .name ':'envname -consul -server '
+---
+global :
+name :consul
+datacenter :dc1
+ui:
+enabled :true
+service :
+type :LoadBalancer
+annotations : |
+'service .beta .kubernetes .io/aws-load -balancer -type ':"external "
+'service .beta .kubernetes .io/aws-load -balancer -nlb-target -type ':"instance "
+HashiCorp | Validated Designs 90
+
+=== Page 92 ===
+Consul: Solution Design Guide 20 April 2026
+5.6.4 ELB_IRSA-Terraformconfiguration
+resource "kubernetes_service_account ""lb_controller "{
+metadata {
+name ="aws-load -balancer -controller "
+namespace ="kube -system "
+labels = {
+"app.kubernetes .io/component "="controller "
+"app.kubernetes .io/name " ="aws-load -balancer -controller "
+}
+annotations = {
+"eks.amazonaws .com/role -arn"=module .lb_irsa .iam_role_arn
+}
+}
+depends_on = [
+module .eks
+]
+}
+5.6.5 AWSloadbalancercontroller-TF
+resource "helm_release ""lb_controller "{
+name ="aws-load -balancer -controller "
+repository ="https ://aws.github .io/eks-charts "
+chart ="aws-load -balancer -controller "
+namespace ="kube -system "
+set {
+name ="clusterName "
+value =module .eks.cluster_name
+}
+set {
+name ="serviceAccount .create "
+value =false
+}
+set {
+name ="serviceAccount .name "
+value =kubernetes_service_account .lb_controller .metadata [0]. name
+}
+}
+HashiCorp | Validated Designs 91
+
+=== Page 93 ===
+Consul: Solution Design Guide 20 April 2026
+5.6.6 EBSCSIdriver
+Terraform configuration for installing an EBS CSI driver.
+data "aws_iam_policy ""ebs_csi_policy "{
+arn ="arn:aws:iam::aws:policy /service -role /AmazonEBSCSIDriverPolicy "
+}
+module "irsa -ebs-csi"{
+source =
+"terraform -aws-modules /iam/aws//modules /iam-assumable -role -with -oidc "
+version ="5.27.0 "
+create_role =true
+role_name =
+"AmazonEKSTFEBSCSIRole -${module .eks.cluster_name }"
+provider_url =module .eks.oidc_provider
+role_policy_arns = [data .aws_iam_policy .ebs_csi_policy .arn]
+oidc_fully_qualified_subjects =
+["system :serviceaccount :kube -system :ebs-csi-controller -sa"]
+}
+resource "aws_eks_addon ""ebs-csi"{
+cluster_name =module .eks.cluster_name
+addon_name ="aws-ebs-csi-driver "
+addon_version ="v1.24.0- eksbuild .1"
+service_account_role_arn =module .irsa -ebs-csi.iam_role_arn
+tags = {
+"eks_addon "="ebs-csi"
+"terraform "="true "
+}
+preserve =false
+}
+HashiCorp | Validated Designs 92
+
+=== Page 94 ===
+Consul: Solution Design Guide 20 April 2026
+HashiCorp | Validated Designs 93
+
+=== Page 95 ===
+Consul: Solution Design Guide 20 April 2026
+5.6.7 Consulserverhelm
+global :
+name :consul
+image :"hashicorp /consul -enterprise :1.16. X-ent"
+datacenter :default
+adminPartitions :
+enabled :true
+name :"default "
+acls :
+manageSystemACLs :true
+enableConsulNamespaces :true
+enterpriseLicense :
+secretName :consul -enterprise -license
+secretKey :license
+enableLicenseAutoload :true
+peering :
+enabled :true
+tls:
+enabled :true
+server :
+replicas : 3
+bootstrapExpect : 3
+exposeService :
+enabled :true
+type :LoadBalancer
+extraConfig : |
+{
+"log_level ":"TRACE "
+}
+syncCatalog :
+enabled :true
+k8sAllowNamespaces : ["*"]
+consulNamespaces :
+mirroringK8S :true
+connectInject :
+enabled :true
+transparentProxy :
+defaultEnabled :false
+consulNamespaces :
+mirroringK8S :true
+k8sAllowNamespaces : ['*']
+k8sDenyNamespaces : []
+apiGateway :
+managedGatewayClass :
+serviceType :LoadBalancer
+meshGateway :
+enabled :true
+replicas : 3
+service :
+enabled :true
+type :LoadBalancer
+ui:
+enabled :true
+service :
+enabled :true
+type :LoadBalancerHashiCorp | Validated Designs 94
+
+=== Page 96 ===
+Consul: Solution Design Guide 20 April 2026
+HashiCorp | Validated Designs 95
+
+=== Page 97 ===
+Consul: Solution Design Guide 20 April 2026
+5.6.8 Non-defaultpartitionK8scluster-helm
+global :
+name :consul
+datacenter :default
+enabled :false
+image :"hashicorp /consul -enterprise :1.16. X-ent"
+imageK8S :hashicorp /consul -k8s-control -plane :1.0.2
+imageConsulDataplane :"hashicorp /consul -dataplane :1.0.0 "
+enableConsulNamespaces :true
+adminPartitions :
+enabled :true
+name :"prod -partition -1"
+peering :
+enabled :true
+tls:
+enabled :true
+caCert :
+secretName :consul -ca-cert
+secretKey :tls.crt
+caKey :
+secretName :consul -ca-key
+secretKey :tls.key
+acls :
+manageSystemACLs :true
+bootstrapToken :
+secretName :consul -bootstrap -acl-token
+secretKey :token
+externalServers :
+enabled :true
+hosts : [ "a7d8d3f12cdfb4783af0357050e95416 -secondryTest .us-east -1.elb.amazonaws .com
+"] # External -IP(orDNS name )ofthe Expose Servers
+tlsServerName :server .default .consul # <server >.<datacenter >.<dns>
+k8sAuthMethodHost :"CE8490A70630FBF25B9DsecondryTest .gr7.us-east -1.eks.amazonaws .
+com"#DNS name ofEKS API ofclient1 -prod -parition -1
+httpsPort : 8501
+grpcPort : 8502
+useSystemRoots :false
+server :
+enabled :false
+connectInject :
+transparentProxy :
+defaultEnabled :true
+enabled :true
+default :true
+apiGateway :
+managedGatewayClass :
+serviceType :LoadBalancer
+meshGateway :
+enabled :true
+replicas : 3
+service :
+enabled :true
+type :LoadBalancerHashiCorp | Validated Designs 96
+
+=== Page 98 ===
+Consul: Solution Design Guide 20 April 2026
+5.6.9 Agenttelemetry
+The Consul agent collects various runtime metrics about the performance of different libraries
+and subsystems. These metrics are aggregated on a ten second (10s) interval and are retained
+for one minute. An interval is the period of time between instances of data being collected and
+aggregated.
+When telemetry is being streamed to an external metrics store, the interval is defined to be that
+store’s flush interval.
+External Store Interval (Seconds)
+dogstatsd 10s
+Prometheus 60s
+statsd 10s
+Consul emits metrics under two major categories Consul health and server health:
+Consul health:
+•Transaction timing
+•Leadership changes
+•Autopilot
+•Garbage collection
+Server health:
+•File descriptors
+•CPU usage
+•Network activity
+•Disk activity
+•Memory usage
+5.6.10 Consultelemetrycollectorintention
+Create a service-intentions configuration entry that allows all traffic to consul-telemetry-
+collector:
+HashiCorp | Validated Designs 97
+
+=== Page 99 ===
+Consul: Solution Design Guide 20 April 2026
+#consul -telemetry -collector .yaml
+apiVersion :consul .hashicorp .com/v1alpha1
+kind :ServiceIntentions
+metadata :
+name :consul -telemetry -collector
+spec :
+destination :
+name :consul -telemetry -collector
+sources :
+-action :allow
+name :'*'
+Create configuration entry:
+kubectl apply --namespace consul --filename consul -telemetry -collector .yaml
+5.6.11 Consulserversizing-EC2toConsulclustersize
+Provider Size Instance Type CPU Memory Disk Capacity Disk IO
+AWS Small m5.large 2 8 min: 100 GB (gp3) min: 3000 IOPS
+AWS Medium m5.xlarge 4 16 min: 100 GB (gp3) min: 3000 IOPS
+AWS Large m5.2xlarge 8 32 min: 200 GB (gp3) min: 7500 IOPS
+AWS Extra Lage m5.4xlarge 16 64 min: 200 GB (gp3) min: 7500 IOPS
+5.6.12 Agents
+You can run the Consul binary to start Consul agents, which are daemons that implement Consul
+control plane functionality. You can start agents as Servers or clients.
+terraform.auto.tfvars - Terraform deployment
+HashiCorp | Validated Designs 98
+
+=== Page 100 ===
+Consul: Solution Design Guide 20 April 2026
+friendly_name_prefix ="consul "
+common_tags = {
+deployment ="consul "
+site ="westeros "
+}
+route53_failover_record = {
+record_name ="consul "
+}
+secretsmanager_secrets = {
+license = {
+name ="consul -license "
+data =""
+}
+ca_certificate_bundle = {
+name ="consul -ca-bundle "
+path ="./consul -agent -ca.pem"
+}
+cert_pem_secret = {
+name ="consul -public "
+path ="./consul -server -public .pem"
+}
+cert_pem_private_key_secret = {
+name ="consul -private "
+path ="./consul -server -private .pem"
+}
+consul_initial_management_token = {
+generate =true
+}
+consul_agent_token = {
+generate =true
+}
+consul_gossip_key = {
+generate =true
+}
+consul_snapshot_token = {
+generate =true
+}
+consul_ingress_gw_token = {
+generate =true
+}
+consul_terminating_gw_token = {
+generate =true
+}
+consul_mesh_gw_token = {
+generate =true
+}
+}
+snapshot_interval ="5min"
+s3_buckets = {
+snapshot = {
+bucket_name ="consul -westeros -snapshots "
+force_destroy =true
+}
+}
+route53_zone_name ="test .aws.sbx.hashicorpdemo .com"
+ssh_public_key ="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCX /57xBO3ZBhWFnHXcO0 +
+DOKyrajTWyvOlxFHUQ /PlH9iNqog4XIWkYlG /3
+f0ctl61IR0InrH2PRYYctlR4HIeMWO2cbJcC8PovWlaB9nHU3rb16JWsx47C48R6iurTxyvYHkeYPbjYlicqztwMbvdh55jw
++vOTZCM85Ni +burz1dxSTYh164rsB2WzRL +G/
+c74D5L6ufOnY6k9VTlf9VGpZ6Zh72xmm9IKyHwO6t518Ht5QZdQtBPKEjbGMByLSHPBsw1ceq1P +
+r315YfH7rYR11DnDNDpkrf87RB5nC9TiukMlz53MtW6vdPzThB /XlupqWDjwdlQGmU9BnGMu +
+jz0eWtUIQkaTANQXxtQAgv /YvuAq2QuRsd /
+lRLwR49fRbUXy3VRThYVu25oZsvPgknsY4ZarTYh1d65C2qrVVvoEYdnx4w +
+rBQWWludOhvcwfz5edpvxIoUh9ksdWog1kMlr8fFUCQepCPUF8ObM69sXjJv9sdM3GpGiGtUinda8 ="
+iam_resources = {
+ssm_enable =true
+cloud_auto_join_enabled =true
+log_forwarding_enabled =true
+role_name ="consul -role "
+policy_name ="consul -policy "
+ssm_enable =true
+}
+rules = {
+consul = {
+server = {
+rpc = {
+enabled =true
+self =true
+target_sg ="agent "
+}
+serf_lan_tcp = {
+enabled =true
+self =true
+target_sg ="agent "
+}
+serf_lan_udp = {
+enabled =true
+self =true
+target_sg ="agent "
+}
+dns_tcp = {
+enabled =true
+self =true
+bidrection =true
+}
+dns_udp = {
+enabled =true
+self =true
+bidrection =true
+}
+https_api = {
+enabled =true
+self =true
+bidrection =false
+}
+grpc = {
+enabled =true
+self =true
+bidrection =false
+}
+grpc_tls = {
+enabled =true
+self =true
+bidrection =false
+}
+}
+agent = {
+rpc = {
+enabled =true
+self =true
+}
+serf_lan_tcp = {
+enabled =true
+self =true
+}
+serf_lan_udp = {
+enabled =true
+self =true
+}
+dns_tcp = {
+enabled =true
+self =true
+bidirectional =true
+}
+dns_udp = {
+enabled =true
+self =true
+bidirectional =true
+}
+serf_lan_udp = {
+enabled =true
+self =true
+}
+mesh_gateway = {
+enabled =true
+self =true
+}
+ingress_gateway = {
+enabled =true
+self =true
+}
+}
+}
+}HashiCorp | Validated Designs 99
+
+=== Page 101 ===
+Consul: Solution Design Guide 20 April 2026
+6 Credits
+Thank you to everyone who contributed to this validated design guidance. This cross-functional
+team, representing many departments within HashiCorp, authored, edited, reviewed, and iterated
+this content to provide prescription and recommendations for using HashiCorp software in enter-
+prise scenarios.
+•Abhishek Tiwari
+•Adam Cavaliere
+•Austin Workman
+•Chris Dunlap
+•David Cañadillas
+•Hari Sankaran
+•Jan Repnak
+•Josh Wolfer
+•Kalen Arndt
+•Kulpreet Singh
+•Luke Kysow
+•Mark Lewis
+•Sean Doyle
+•Tu Nguyen
+7 Changelog
+7.1 2026-01
+•Update meta descriptions
+•Updated credits and contributors
+7.2 2025-06
+•Use consistent guide names and descriptions
+HashiCorp | Validated Designs 100
+
+=== Page 102 ===
+Consul: Solution Design Guide 20 April 2026
+7.3 2025-05
+•Removed document structure section
+7.4 2025-01
+•Add Consul Solution Design Guide updates for HVD Modules
+•Updated documentation links
+7.5 2024-02
+•GA Release
+HashiCorp | Validated Designs 101
