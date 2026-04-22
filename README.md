@@ -1,4 +1,4 @@
-# meshtrbl - Mesh Troubleshooter
+# meshtrbl - Service Mesh Troubleshooter
 
 An AI-powered troubleshooting agent built with LangChain, LangGraph, and OpenAI GPT-4 for Kubernetes clusters and HashiCorp Consul service mesh.
 
