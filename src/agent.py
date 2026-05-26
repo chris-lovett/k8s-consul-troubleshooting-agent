@@ -16,7 +16,6 @@ from urllib3.exceptions import InsecureRequestWarning
 warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
 from langchain.agents import AgentExecutor, create_react_agent
-from langchain.tools import Tool
 from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.memory import ConversationBufferMemory
@@ -24,11 +23,13 @@ from langchain_core.messages import BaseMessage
 
 from .tools import KubernetesTools, ConsulTools
 from .prompts.system_prompts import SYSTEM_PROMPT, REACT_PROMPT_TEMPLATE
-from .error_patterns import pattern_matcher, format_pattern_match
-from .intent_classifier import intent_classifier, IntentType
+from .intent_classifier import intent_classifier
 from .session_cache import SessionCache
-from .core.router import QueryRouter, RouteKind
+from .core.router import QueryRouter
 from .core.settings import AppSettings
+from .application.orchestration import QueryOrchestrator, ExecutionPlanner
+from .application.services import IntentRoutingService, ToolFactoryService
+from .infrastructure.adapters import KubernetesAdapter, ConsulAdapter
 from .ux_utils import (
     RichOutput, ProgressIndicator, ErrorFormatter, ConnectionHealthCheck,
     HelpFormatter, console, print_header, print_success, print_error,
@@ -113,6 +114,7 @@ class TroubleshootingAgent:
         self.max_iterations = max_iterations
         self.max_execution_time = max_execution_time
         self.router = router or QueryRouter()
+        self.execution_planner = ExecutionPlanner()
         
         # Initialize session cache
         self.cache = SessionCache(
@@ -139,15 +141,35 @@ class TroubleshootingAgent:
         ) if self.reasoning_model else None
         
         # Initialize tools
-        self.k8s_tools = KubernetesTools(namespace=k8s_namespace)
-        self.consul_tools = ConsulTools(
+        raw_k8s_tools = KubernetesTools(namespace=k8s_namespace)
+        raw_consul_tools = ConsulTools(
             host=consul_host,
             port=consul_port,
             token=consul_token
         )
+        self.k8s_tools = KubernetesAdapter(raw_k8s_tools)
+        self.consul_tools = ConsulAdapter(raw_consul_tools)
+
+        # Intent classification and fast-path handling extracted from run().
+        self.intent_routing_service = IntentRoutingService(
+            classify_intent=intent_classifier.classify,
+            should_use_fast_path=intent_classifier.should_use_fast_path,
+            execute_fast_path=self._execute_fast_path,
+            verbose=self.verbose,
+            print_intent_details=self._print_intent_classification,
+        )
         
         # Create LangChain tools
-        self.tools = self._create_tools()
+        self.tool_factory_service = ToolFactoryService(
+            k8s_tools=self.k8s_tools,
+            consul_tools=self.consul_tools,
+            cache=self.cache,
+            enable_cache=self.enable_cache,
+            verbose=self.verbose,
+            get_active_tool_tracker=lambda: self._active_tool_tracker,
+            record_active_tool_output=self._record_active_tool_output,
+        )
+        self.tools = self.tool_factory_service.create_tools()
         
         # Create agent
         self.agent = self._create_agent()
@@ -161,6 +183,18 @@ class TroubleshootingAgent:
             max_iterations=self.max_iterations,
             max_execution_time=self.max_execution_time,
             handle_parsing_errors=True
+        )
+
+        # Route-aware orchestration service keeps run() lightweight and testable.
+        self.query_orchestrator = QueryOrchestrator(
+            router=self.router,
+            execution_planner=self.execution_planner,
+            run_direct_answer=self._run_direct_answer,
+            run_repo_code_assistance=self._run_repo_code_assistance,
+            run_workflow_mode=self._run_workflow_mode,
+            run_live_troubleshooting=self._run_live_troubleshooting,
+            is_complex_query=self._is_complex_troubleshooting_query,
+            workflow_enabled=lambda: self.enable_workflow,
         )
         
         # Initialize LangGraph workflow (Phase 3) - only if available
@@ -179,305 +213,9 @@ class TroubleshootingAgent:
                     print("Install with: pip install langgraph")
                     print("Falling back to standard agent mode.")
     
-    def _create_tools(self) -> list:
-        """Create LangChain tools from Kubernetes and Consul tools."""
-        
-        tools = [
-            # Kubernetes tools
-            Tool(
-                name="get_pod_status",
-                func=self._wrap_tool_activity(
-                    "Checking pod status...",
-                    lambda x: self._parse_and_call(self.k8s_tools.get_pod_status, x),
-                    tool_name="get_pod_status"
-                ),
-                description="""Get the status of a specific Kubernetes pod.
-                Input REQUIRED: pod_name or pod_name,namespace
-                Example: "my-app-pod" or "my-app-pod,production"
-                Use this to check if a specific pod is running, pending, or has errors.
-                NOTE: To check ALL pods, use list_pods instead."""
-            ),
-            Tool(
-                name="get_pod_logs",
-                func=self._wrap_tool_activity(
-                    "Reviewing logs...",
-                    lambda x: self._parse_and_call(self.k8s_tools.get_pod_logs, x),
-                    tool_name="get_pod_logs"
-                ),
-                description="""Get logs from a specific Kubernetes pod.
-                Input REQUIRED: pod_name or pod_name,namespace or pod_name,namespace,container
-                Example: "my-app-pod" or "my-app-pod,production" or "my-app-pod,production,app-container"
-                Use this to investigate application errors or crashes in a specific pod."""
-            ),
-            Tool(
-                name="list_pods",
-                func=self._wrap_tool_activity(
-                    "Listing pods...",
-                    lambda x: self._parse_and_call(self.k8s_tools.list_pods, x),
-                    tool_name="list_pods"
-                ),
-                description="""List all pods in a namespace.
-                Input can be: empty (uses default namespace), namespace, or namespace,label_selector
-                Example: "" or "default" or "production,app=myapp"
-                Use this to see all pods and their status, or to check if all pods are healthy."""
-            ),
-            Tool(
-                name="describe_pod",
-                func=self._wrap_tool_activity(
-                    "Inspecting pod details...",
-                    lambda x: self._parse_and_call(self.k8s_tools.describe_pod, x),
-                    tool_name="describe_pod"
-                ),
-                description="""Get detailed information about a specific pod (similar to kubectl describe).
-                Input REQUIRED: pod_name or pod_name,namespace
-                Example: "my-app-pod" or "my-app-pod,production"
-                Use this to see events, configuration, and detailed status of a specific pod."""
-            ),
-            
-            # Consul tools
-            Tool(
-                name="list_consul_services",
-                func=self._wrap_tool_activity(
-                    "Listing Consul services...",
-                    lambda x: self.consul_tools.list_services(),
-                    tool_name="list_consul_services"
-                ),
-                description="""List all services registered in Consul.
-                Input: empty string "" (datacenter parameter not currently used)
-                Use this to see what services are available in the service mesh."""
-            ),
-            Tool(
-                name="get_service_health",
-                func=self._wrap_tool_activity(
-                    "Checking Consul service health...",
-                    lambda x: self.consul_tools.get_service_health(x),
-                    tool_name="get_service_health"
-                ),
-                description="""Get health status of a specific Consul service.
-                Input REQUIRED: service_name
-                Example: "web-service"
-                Use this to check if a specific service is healthy and see health check details."""
-            ),
-            Tool(
-                name="get_service_instances",
-                func=self._wrap_tool_activity(
-                    "Reviewing service instances...",
-                    lambda x: self.consul_tools.get_service_instances(x),
-                    tool_name="get_service_instances"
-                ),
-                description="""Get all instances of a specific Consul service.
-                Input REQUIRED: service_name
-                Example: "web-service"
-                Use this to see where instances of a specific service are running."""
-            ),
-            Tool(
-                name="list_consul_intentions",
-                func=self._wrap_tool_activity(
-                    "Listing Consul intentions...",
-                    lambda x: self.consul_tools.list_intentions(),
-                    tool_name="list_consul_intentions"
-                ),
-                description="""List all Consul Connect intentions (service-to-service access rules).
-                Input: empty string ""
-                Use this to see which services can communicate with each other."""
-            ),
-            Tool(
-                name="check_consul_intention",
-                func=self._wrap_tool_activity(
-                    "Checking Consul intention...",
-                    lambda x: self._parse_and_call(self.consul_tools.check_intention, x),
-                    tool_name="check_consul_intention"
-                ),
-                description="""Check if traffic is allowed between two specific services.
-                Input REQUIRED: source_service,destination_service
-                Example: "web,api"
-                Use this to troubleshoot service-to-service communication issues."""
-            ),
-            Tool(
-                name="get_consul_members",
-                func=self._wrap_tool_activity(
-                    "Checking Consul cluster members...",
-                    lambda x: self.consul_tools.get_agent_members(),
-                    tool_name="get_consul_members"
-                ),
-                description="""Get Consul cluster members.
-                Input: empty string ""
-                Use this to check cluster health and member status."""
-            ),
-            
-            # Error Pattern Recognition tools
-            Tool(
-                name="match_error_pattern",
-                func=self._wrap_tool_activity(
-                    "Analyzing error patterns...",
-                    lambda x: self._match_error_pattern(x),
-                    tool_name="match_error_pattern"
-                ),
-                description="""Match error messages or logs against known error patterns for instant diagnosis.
-                Input should be: error_text or error_text,category
-                Example: "CrashLoopBackOff" or "ImagePullBackOff,kubernetes"
-                Category can be 'kubernetes' or 'consul' (optional)
-                Use this FIRST when you see error messages or symptoms to get instant solutions."""
-            ),
-            Tool(
-                name="search_error_patterns",
-                func=self._wrap_tool_activity(
-                    "Searching error pattern database...",
-                    lambda x: self._search_error_patterns(x),
-                    tool_name="search_error_patterns"
-                ),
-                description="""Search the error pattern database by keywords or symptoms.
-                Input should be: search_query
-                Example: "pod crashing" or "connection refused" or "memory"
-                Use this to find relevant error patterns when you know the symptom but not the exact error."""
-            ),
-        ]
-        
-        return tools
-    
-    def _wrap_tool_activity(self, activity_message: str, func, tool_name: str = ""):
-        """Print lightweight tool activity when verbose mode is disabled, with caching support."""
-        def wrapped(input_str: str):
-            normalized_input = (input_str or "").strip()
-            
-            # Check cache first
-            if self.enable_cache and tool_name:
-                cached_result = self.cache.get(tool_name, normalized_input)
-                if cached_result is not None:
-                    if not self.verbose:
-                        print(f"\n{activity_message} [cached]", flush=True)
-                    return cached_result
-            
-            if self._active_tool_tracker is not None:
-                tool_key = f"{activity_message}|{normalized_input}"
-                self._active_tool_tracker[tool_key] += 1
-                if self._active_tool_tracker[tool_key] > 2:
-                    raise RuntimeError(
-                        f"Repeated tool call limit reached for '{activity_message}' with the same input."
-                    )
-
-            if not self.verbose:
-                print(f"\n{activity_message}", flush=True)
-
-            result = func(input_str)
-            
-            # Store in cache
-            if self.enable_cache and tool_name:
-                self.cache.set(tool_name, result, normalized_input)
-
-            if self._active_tool_tracker is not None:
-                rendered_result = str(result).strip()
-                if rendered_result:
-                    self._active_tool_outputs.append(
-                        {
-                            "activity": activity_message,
-                            "input": normalized_input,
-                            "output": rendered_result[:500]
-                        }
-                    )
-
-            return result
-        return wrapped
-
-    def _parse_and_call(self, func, input_str: str):
-        """Parse comma-separated input and call function with appropriate arguments."""
-        if not input_str or input_str.strip() == "":
-            return func()
-        
-        parts = [p.strip() for p in input_str.split(',')]
-        
-        try:
-            return func(*parts)
-        except TypeError as e:
-            return f"Error: Invalid input format. {str(e)}"
-    
-    def _match_error_pattern(self, input_str: str) -> str:
-        """
-        Match error text against known patterns.
-        
-        Args:
-            input_str: Error text or "error_text,category"
-        
-        Returns:
-            Formatted pattern matches or message if no matches
-        """
-        if not input_str or not input_str.strip():
-            return "Error: Please provide error text to match against patterns."
-        
-        parts = [p.strip() for p in input_str.split(',', 1)]
-        error_text = parts[0]
-        category = parts[1] if len(parts) > 1 else None
-        
-        # Validate category
-        if category and category not in ['kubernetes', 'consul']:
-            return f"Error: Invalid category '{category}'. Use 'kubernetes' or 'consul'."
-        
-        matches = pattern_matcher.match(error_text, category)
-        
-        if not matches:
-            return (
-                "No matching error patterns found in the database. "
-                "This might be a unique issue. Proceed with manual troubleshooting using other tools."
-            )
-        
-        # Format the top matches
-        output = [f"Found {len(matches)} matching error pattern(s):\n"]
-        
-        for i, pattern in enumerate(matches[:3], 1):  # Show top 3 matches
-            output.append(f"\n{'='*70}")
-            output.append(f"Match #{i}: {pattern.name} ({pattern.severity.upper()} severity)")
-            output.append('='*70)
-            output.append(format_pattern_match(pattern))
-        
-        if len(matches) > 3:
-            output.append(f"\n... and {len(matches) - 3} more pattern(s).")
-            output.append("Use search_error_patterns to explore more patterns.")
-        
-        return "\n".join(output)
-    
-    def _search_error_patterns(self, query: str) -> str:
-        """
-        Search error patterns by keywords or symptoms.
-        
-        Args:
-            query: Search query
-        
-        Returns:
-            Formatted search results
-        """
-        if not query or not query.strip():
-            return "Error: Please provide a search query."
-        
-        matches = pattern_matcher.search_patterns(query)
-        
-        if not matches:
-            return (
-                f"No error patterns found matching '{query}'. "
-                "Try different keywords like 'crash', 'connection', 'memory', 'certificate', etc."
-            )
-        
-        # Format search results
-        output = [f"Found {len(matches)} pattern(s) matching '{query}':\n"]
-        
-        for i, pattern in enumerate(matches[:5], 1):  # Show top 5 results
-            output.append(f"\n{i}. {pattern.name} ({pattern.category}/{pattern.subcategory})")
-            output.append(f"   Severity: {pattern.severity.upper()}")
-            output.append(f"   Keywords: {', '.join(pattern.keywords[:5])}")
-            
-            if i <= 2:  # Show full details for top 2
-                output.append(f"\n   Symptoms:")
-                for symptom in pattern.symptoms[:3]:
-                    output.append(f"     • {symptom}")
-                output.append(f"\n   Quick Solutions:")
-                for solution in pattern.solutions[:2]:
-                    output.append(f"     • {solution}")
-        
-        if len(matches) > 5:
-            output.append(f"\n... and {len(matches) - 5} more pattern(s).")
-        
-        output.append("\nUse match_error_pattern with specific error text for detailed diagnosis.")
-        
-        return "\n".join(output)
+    def _record_active_tool_output(self, output: Dict[str, str]) -> None:
+        """Record tool output snippets for partial diagnosis summaries."""
+        self._active_tool_outputs.append(output)
     
     def _create_agent(self):
         """Create the ReAct agent."""
@@ -499,6 +237,15 @@ class TroubleshootingAgent:
     def _route_query(self, query: str) -> str:
         """Route the query to the most appropriate execution path."""
         return self.router.route(query).value
+
+    def _print_intent_classification(self, intent) -> None:
+        """Render intent classification diagnostics in verbose mode."""
+        console.print("\n[cyan][Intent Classification][/cyan]")
+        console.print(f"  Type: [yellow]{intent.intent_type.value}[/yellow]")
+        console.print(f"  Confidence: [green]{intent.confidence:.0%}[/green]")
+        console.print(f"  Priority: [blue]{intent.priority}[/blue]")
+        console.print(f"  Entities: {intent.entities}")
+        console.print(f"  Suggested Flow: {intent.suggested_flow}")
 
     def _run_direct_answer(self, query: str) -> str:
         """Answer simple natural-language requests without tools."""
@@ -896,36 +643,13 @@ class TroubleshootingAgent:
             Agent's response with diagnosis and recommendations
         """
         try:
-            # First, check if intent routing is enabled and classify the query
             if self.enable_intent_routing:
-                intent = intent_classifier.classify(query)
-                
-                if self.verbose:
-                    console.print("\n[cyan][Intent Classification][/cyan]")
-                    console.print(f"  Type: [yellow]{intent.intent_type.value}[/yellow]")
-                    console.print(f"  Confidence: [green]{intent.confidence:.0%}[/green]")
-                    console.print(f"  Priority: [blue]{intent.priority}[/blue]")
-                    console.print(f"  Entities: {intent.entities}")
-                    console.print(f"  Suggested Flow: {intent.suggested_flow}")
-                
-                # Use fast-path if conditions are met
-                if intent_classifier.should_use_fast_path(intent):
-                    return self._execute_fast_path(query, intent)
+                fast_path_response = self.intent_routing_service.try_fast_path(query)
+                if fast_path_response is not None:
+                    return fast_path_response
             
-            # Fall back to standard routing
-            route = self.router.route(query)
-
-            if route == RouteKind.DIRECT_ANSWER:
-                return self._run_direct_answer(query)
-
-            if route == RouteKind.REPO_CODE_ASSISTANCE:
-                return self._run_repo_code_assistance(query)
-
-            # Phase 3: Use workflow mode for complex troubleshooting if enabled
-            if self.enable_workflow and self._is_complex_troubleshooting_query(query):
-                return self._run_workflow_mode(query)
-
-            return self._run_live_troubleshooting(query)
+            # Fall back to route-aware orchestration.
+            return self.query_orchestrator.run(query)
         except Exception as e:
             message = str(e)
             if "iteration limit" in message.lower() or "time limit" in message.lower():

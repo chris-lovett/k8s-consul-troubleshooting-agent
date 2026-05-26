@@ -18,7 +18,7 @@ from langgraph.graph import StateGraph, END
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
-from ..tools import KubernetesTools, ConsulTools
+from ..core.interfaces import KubernetesAdapterProtocol, ConsulAdapterProtocol
 from ..intent_classifier import intent_classifier, IntentType
 from ..error_patterns import pattern_matcher
 
@@ -70,8 +70,8 @@ class TroubleshootingWorkflow:
     
     def __init__(
         self,
-        k8s_tools: KubernetesTools,
-        consul_tools: ConsulTools,
+        k8s_tools: KubernetesAdapterProtocol,
+        consul_tools: ConsulAdapterProtocol,
         llm: ChatOpenAI,
         verbose: bool = False
     ):

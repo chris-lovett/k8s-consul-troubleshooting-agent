@@ -2,6 +2,19 @@
 
 from .router import QueryRouter, RouteKind
 from .settings import AppSettings
-from .interfaces import RouterProtocol
+from .interfaces import (
+	RouterProtocol,
+	QueryOrchestratorProtocol,
+	KubernetesAdapterProtocol,
+	ConsulAdapterProtocol,
+)
 
-__all__ = ["QueryRouter", "RouteKind", "AppSettings", "RouterProtocol"]
+__all__ = [
+	"QueryRouter",
+	"RouteKind",
+	"AppSettings",
+	"RouterProtocol",
+	"QueryOrchestratorProtocol",
+	"KubernetesAdapterProtocol",
+	"ConsulAdapterProtocol",
+]
