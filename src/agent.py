@@ -15,25 +15,30 @@ from dotenv import load_dotenv
 from urllib3.exceptions import InsecureRequestWarning
 warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
-from langchain.agents import AgentExecutor, create_react_agent
 from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
 from langchain.memory import ConversationBufferMemory
 from langchain_core.messages import BaseMessage
 
 from .tools import KubernetesTools, ConsulTools
-from .prompts.system_prompts import SYSTEM_PROMPT, REACT_PROMPT_TEMPLATE
 from .intent_classifier import intent_classifier
 from .session_cache import SessionCache
 from .core.router import QueryRouter
 from .core.settings import AppSettings
 from .application.orchestration import QueryOrchestrator, ExecutionPlanner
-from .application.services import IntentRoutingService, ToolFactoryService
+from .application.services import (
+    ChatSessionService,
+    IntentRoutingService,
+    LLMRuntimeService,
+    ToolFactoryService,
+)
 from .infrastructure.adapters import KubernetesAdapter, ConsulAdapter
 from .ux_utils import (
-    RichOutput, ProgressIndicator, ErrorFormatter, ConnectionHealthCheck,
-    HelpFormatter, console, print_header, print_success, print_error,
-    print_warning, print_info
+    RichOutput,
+    ProgressIndicator,
+    ErrorFormatter,
+    ConnectionHealthCheck,
+    console,
+    print_warning,
 )
 
 # Optional Phase 3 workflow support
@@ -170,20 +175,16 @@ class TroubleshootingAgent:
             record_active_tool_output=self._record_active_tool_output,
         )
         self.tools = self.tool_factory_service.create_tools()
-        
-        # Create agent
-        self.agent = self._create_agent()
-        
-        # Create agent executor
-        self.agent_executor = AgentExecutor(
-            agent=self.agent,
+
+        # Create LLM runtime service and default executor.
+        self.llm_runtime_service = LLMRuntimeService(
             tools=self.tools,
             memory=self.memory,
-            verbose=verbose,
+            verbose=self.verbose,
             max_iterations=self.max_iterations,
             max_execution_time=self.max_execution_time,
-            handle_parsing_errors=True
         )
+        self.agent_executor = self.llm_runtime_service.create_executor(self.llm)
 
         # Route-aware orchestration service keeps run() lightweight and testable.
         self.query_orchestrator = QueryOrchestrator(
@@ -195,6 +196,21 @@ class TroubleshootingAgent:
             run_live_troubleshooting=self._run_live_troubleshooting,
             is_complex_query=self._is_complex_troubleshooting_query,
             workflow_enabled=lambda: self.enable_workflow,
+        )
+
+        # Interactive session command handling service.
+        self.chat_session_service = ChatSessionService(
+            enable_memory=self.enable_memory,
+            enable_intent_routing=self.enable_intent_routing,
+            enable_cache=self.enable_cache,
+            enable_workflow=self.enable_workflow,
+            workflow_available=WORKFLOW_AVAILABLE,
+            clear_memory=self.clear_memory,
+            get_conversation_history=self.get_conversation_history,
+            get_conversation_summary=self.get_conversation_summary,
+            get_cache_stats=self.get_cache_stats,
+            clear_cache=self.clear_cache,
+            run_with_spinner=self._run_with_spinner,
         )
         
         # Initialize LangGraph workflow (Phase 3) - only if available
@@ -216,23 +232,6 @@ class TroubleshootingAgent:
     def _record_active_tool_output(self, output: Dict[str, str]) -> None:
         """Record tool output snippets for partial diagnosis summaries."""
         self._active_tool_outputs.append(output)
-    
-    def _create_agent(self):
-        """Create the ReAct agent."""
-        
-        # Create prompt with system message
-        prompt = PromptTemplate.from_template(
-            SYSTEM_PROMPT + "\n\n" + REACT_PROMPT_TEMPLATE
-        )
-        
-        # Create ReAct agent
-        agent = create_react_agent(
-            llm=self.llm,
-            tools=self.tools,
-            prompt=prompt
-        )
-        
-        return agent
 
     def _route_query(self, query: str) -> str:
         """Route the query to the most appropriate execution path."""
@@ -389,22 +388,7 @@ class TroubleshootingAgent:
 
         executor = self.agent_executor
         if self.reasoning_llm and self._is_complex_troubleshooting_query(query):
-            reasoning_agent = create_react_agent(
-                llm=self.reasoning_llm,
-                tools=self.tools,
-                prompt=PromptTemplate.from_template(
-                    SYSTEM_PROMPT + "\n\n" + REACT_PROMPT_TEMPLATE
-                )
-            )
-            executor = AgentExecutor(
-                agent=reasoning_agent,
-                tools=self.tools,
-                memory=self.memory,
-                verbose=self.verbose,
-                max_iterations=self.max_iterations,
-                max_execution_time=self.max_execution_time,
-                handle_parsing_errors=True
-            )
+            executor = self.llm_runtime_service.create_executor(self.reasoning_llm)
 
         try:
             result = executor.invoke({"input": query})
@@ -677,95 +661,7 @@ class TroubleshootingAgent:
         """
         Start an interactive chat session with the agent.
         """
-        # Print header with rich formatting
-        print_header(
-            "Kubernetes & Consul Troubleshooting Agent",
-            "AI-powered troubleshooting for your service mesh"
-        )
-        
-        console.print("\n[dim]I'm here to help you troubleshoot Kubernetes and Consul issues.[/dim]\n")
-        
-        # Show enabled features
-        if self.enable_memory:
-            RichOutput.print_info("Conversation memory is ENABLED - I'll remember our discussion!", "💾")
-        
-        if self.enable_intent_routing:
-            RichOutput.print_info("Intent routing is ENABLED - Fast-path for common issues!", "🚀")
-        
-        if self.enable_cache:
-            RichOutput.print_info("Session caching is ENABLED - Faster repeated queries!", "⚡")
-        
-        if self.enable_workflow and WORKFLOW_AVAILABLE:
-            RichOutput.print_info("LangGraph workflows are ENABLED - Advanced troubleshooting!", "🔄")
-        
-        console.print()
-        
-        # Show available commands
-        console.print("[dim]Type [bold]/help[/bold] for available commands or [bold]/examples[/bold] for common scenarios.[/dim]")
-        console.print("[dim]Type [bold]exit[/bold] or [bold]quit[/bold] to end the session.[/dim]\n")
-        
-        while True:
-            try:
-                user_input = console.input("[bold cyan]You:[/bold cyan] ").strip()
-                
-                if user_input.lower() in ['exit', 'quit', 'q']:
-                    console.print("\n[green]Goodbye! Happy troubleshooting! 👋[/green]")
-                    break
-                
-                if not user_input:
-                    continue
-                
-                # Handle special commands
-                if user_input.startswith('/'):
-                    if user_input.lower() == '/clear':
-                        self.clear_memory()
-                        print_success("Conversation memory cleared.")
-                        continue
-                    elif user_input.lower() == '/history':
-                        history = self.get_conversation_history()
-                        if not history:
-                            console.print("[dim]No conversation history yet.[/dim]")
-                        else:
-                            console.print(f"\n[bold cyan]📜 Conversation History[/bold cyan] [dim]({len(history)} messages)[/dim]:")
-                            for i, msg in enumerate(history, 1):
-                                role = "[green]You[/green]" if msg.type == "human" else "[blue]Agent[/blue]"
-                                content = str(msg.content)[:200]
-                                if len(str(msg.content)) > 200:
-                                    content += "..."
-                                console.print(f"\n{i}. {role}:")
-                                console.print(f"   [dim]{content}[/dim]")
-                        continue
-                    elif user_input.lower() == '/summary':
-                        console.print(f"\n[bold cyan]📋 Conversation Summary:[/bold cyan]\n{self.get_conversation_summary()}")
-                        continue
-                    elif user_input.lower() == '/cache':
-                        console.print(f"\n{self.get_cache_stats()}")
-                        continue
-                    elif user_input.lower() == '/clearcache':
-                        self.clear_cache()
-                        print_success("Session cache cleared.")
-                        continue
-                    elif user_input.lower() == '/help':
-                        HelpFormatter.show_commands(self.enable_memory, self.enable_cache)
-                        continue
-                    elif user_input.lower() == '/examples':
-                        HelpFormatter.show_examples()
-                        continue
-                    else:
-                        print_warning(f"Unknown command: {user_input}")
-                        console.print("[dim]Type [bold]/help[/bold] to see available commands.[/dim]")
-                        continue
-                
-                response = self._run_with_spinner(user_input)
-                console.print(f"\n[bold blue]Agent:[/bold blue] {response}")
-                console.print(RichOutput.print_status_line(response))
-                
-            except KeyboardInterrupt:
-                console.print("\n\n[green]Goodbye! Happy troubleshooting! 👋[/green]")
-                break
-            except Exception as e:
-                error_msg = ErrorFormatter.format_error(e, context="During chat session")
-                console.print(f"\n{error_msg}")
+        self.chat_session_service.run()
 
 
 def main():

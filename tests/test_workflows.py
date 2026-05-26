@@ -329,10 +329,24 @@ class TestTroubleshootingWorkflow:
 class TestWorkflowIntegration:
     """Test workflow integration with the agent."""
     
+    @patch('src.agent.ConsulTools')
+    @patch('src.agent.KubernetesTools')
     @patch('src.agent.TroubleshootingWorkflow')
-    def test_agent_uses_workflow_for_complex_queries(self, mock_workflow_class):
+    def test_agent_uses_workflow_for_complex_queries(
+        self,
+        mock_workflow_class,
+        mock_k8s_tools,
+        mock_consul_tools,
+    ):
         """Test that agent uses workflow mode for complex queries."""
         from src.agent import TroubleshootingAgent
+
+        mock_k8s_instance = Mock()
+        mock_k8s_instance.v1 = Mock()
+        mock_k8s_tools.return_value = mock_k8s_instance
+
+        mock_consul_instance = Mock()
+        mock_consul_tools.return_value = mock_consul_instance
         
         # Mock workflow
         mock_workflow = Mock()
