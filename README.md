@@ -23,7 +23,7 @@ This repository contains comprehensive, production-ready deployment documentatio
 
 ```bash
 # 1. Install dependencies
-pip install mkdocs-material mkdocs-minify-plugin
+pip3 install mkdocs-material mkdocs-minify-plugin
 
 # 2. Serve documentation locally
 mkdocs serve
