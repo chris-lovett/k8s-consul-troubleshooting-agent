@@ -93,7 +93,9 @@ class IntentClassifier:
             IntentType.POD_STATUS_CHECK: [
                 {
                     "patterns": [
+                        r"(?:show|get|check) (?:me )?(?:the )?pod status",
                         r"(?:check|show|get|what(?:'s| is)) (?:the )?status (?:of )?(?:pod|pods?)",
+                        r"(?:check|show|get) (?:the )?pod status",
                         r"is (?:the )?pod .+ (?:running|up|healthy)",
                         r"pod .+ status",
                         r"what(?:'s| is) (?:the )?state (?:of )?pod",
@@ -105,6 +107,7 @@ class IntentClassifier:
             IntentType.POD_CRASH_INVESTIGATION: [
                 {
                     "patterns": [
+                        r"pod (?:won't|doesn't|not|can't) (?:stay up|run)",
                         r"pod .+ (?:is )?(?:crash|crashing|crashed)",
                         r"crashloop(?:backoff)?",
                         r"pod .+ (?:keeps )?restart(?:ing|s)",
@@ -119,6 +122,7 @@ class IntentClassifier:
                 {
                     "patterns": [
                         r"(?:show|get|check|view) (?:the )?logs? (?:for|from|of) (?:pod )?",
+                        r"(?:show|get|check|view) (?:the )?pod logs?",
                         r"what (?:do|does) (?:the )?logs? (?:say|show)",
                         r"pod .+ logs?",
                         r"logs? (?:for|from|of) .+",
@@ -130,6 +134,7 @@ class IntentClassifier:
             IntentType.POD_NOT_STARTING: [
                 {
                     "patterns": [
+                        r"pod (?:is )?not (?:starting|running)",
                         r"pod .+ (?:won't|doesn't|not|can't) start",
                         r"pod .+ (?:is )?(?:stuck|pending)",
                         r"pod .+ (?:not|isn't) (?:starting|running)",
@@ -157,6 +162,8 @@ class IntentClassifier:
             IntentType.SERVICE_CONNECTIVITY: [
                 {
                     "patterns": [
+                        r"service connectivity (?:issue|problem|error)?",
+                        r"(?:can't|cannot|unable to) (?:connect|reach) service",
                         r"(?:can't|cannot|unable to) (?:connect|reach) .+ service",
                         r"service .+ (?:not responding|down|unreachable)",
                         r"connection (?:refused|timeout|failed)",
@@ -194,7 +201,9 @@ class IntentClassifier:
             IntentType.CONSUL_SERVICE_HEALTH: [
                 {
                     "patterns": [
+                        r"consul service health",
                         r"consul service .+ (?:health|healthy|unhealthy)",
+                        r"(?:check|verify) service health in consul",
                         r"(?:check|verify) consul (?:service )?health",
                         r"consul health check",
                         r"service .+ (?:health|status) in consul",
@@ -526,6 +535,20 @@ class IntentClassifier:
             Intent object with classification results
         """
         query_lower = query.lower().strip()
+
+        # Fast-path explicit error snippets (short, code-like diagnostics)
+        if (
+            query_lower in {"crashloopbackoff", "imagepullbackoff"}
+            or re.match(r"^(?:error|exception):", query_lower)
+            or re.match(r"^(?:exit code|status code|error code)\s*\d+$", query_lower)
+        ):
+            return Intent(
+                intent_type=IntentType.ERROR_PATTERN_MATCH,
+                confidence=0.95,
+                entities=self._extract_entities(query),
+                suggested_flow=self.flows[IntentType.ERROR_PATTERN_MATCH].name,
+                priority=self._get_priority(IntentType.ERROR_PATTERN_MATCH, {}),
+            )
         
         # Extract entities first
         entities = self._extract_entities(query)
@@ -539,6 +562,13 @@ class IntentClassifier:
                 for pattern in pattern_group["patterns"]:
                     if re.search(pattern, query_lower):
                         confidence = pattern_group["confidence"]
+
+                        # Explicitly error-framed queries should prefer error-pattern intent.
+                        if (
+                            intent_type == IntentType.ERROR_PATTERN_MATCH
+                            and re.search(r"(?:error|exception|failure):", query_lower)
+                        ):
+                            confidence += 0.2
                         
                         # Boost confidence if entities are found
                         if entities:

@@ -10,7 +10,8 @@ import os
 class TestAgentInitialization:
     """Test agent initialization."""
     
-    def test_agent_requires_api_key(self):
+    @patch('src.agent.load_dotenv')
+    def test_agent_requires_api_key(self, _mock_load_dotenv):
         """Test that agent requires OpenAI API key."""
         from src.agent import TroubleshootingAgent
         

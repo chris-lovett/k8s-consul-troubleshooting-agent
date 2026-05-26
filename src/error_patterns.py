@@ -1218,8 +1218,15 @@ class ErrorPatternMatcher:
         Returns:
             List of matching patterns
         """
-        query_lower = query.lower()
+        query_lower = query.lower().strip()
+        terms = [t for t in re.split(r"\s+", query_lower) if t]
         matches = []
+
+        def _stem(word: str) -> str:
+            for suffix in ("ing", "ed", "es", "s"):
+                if word.endswith(suffix) and len(word) > len(suffix) + 2:
+                    return word[: -len(suffix)]
+            return word
         
         for pattern in self.patterns:
             # Check name
@@ -1232,10 +1239,30 @@ class ErrorPatternMatcher:
                 matches.append((2.0, pattern))
                 continue
             
-            # Check symptoms
+            # Check symptoms (exact query substring)
             if any(query_lower in symptom.lower() for symptom in pattern.symptoms):
                 matches.append((1.5, pattern))
                 continue
+
+            # Check symptoms by term overlap (e.g., "pod crashing")
+            if terms:
+                symptom_hit = False
+                for symptom in pattern.symptoms:
+                    symptom_words = re.findall(r"[a-z0-9]+", symptom.lower())
+                    stemmed_symptom_words = [_stem(w) for w in symptom_words]
+                    stemmed_terms = [_stem(t) for t in terms]
+                    matched_terms = sum(
+                        1
+                        for term in stemmed_terms
+                        if any(word.startswith(term) or term.startswith(word) for word in stemmed_symptom_words)
+                    )
+                    if matched_terms >= max(1, len(stemmed_terms) - 1):
+                        symptom_hit = True
+                        break
+
+                if symptom_hit:
+                    matches.append((1.4, pattern))
+                    continue
             
             # Check root causes
             if any(query_lower in cause.lower() for cause in pattern.root_causes):

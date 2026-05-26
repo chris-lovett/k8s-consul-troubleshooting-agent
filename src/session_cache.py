@@ -6,7 +6,6 @@ to avoid redundant API calls and improve response times.
 """
 
 import time
-import hashlib
 import json
 from typing import Any, Dict, Optional, Callable, Tuple
 from dataclasses import dataclass, field
@@ -126,9 +125,8 @@ class SessionCache:
             if v is not None:
                 key_parts.append(f"{k}={v}")
         
-        # Hash the key for consistent length
-        key_str = "|".join(key_parts)
-        return hashlib.md5(key_str.encode()).hexdigest()
+        # Keep keys human-readable to support pattern-based invalidation.
+        return "|".join(key_parts)
     
     def _is_expired(self, entry: CacheEntry, tool_name: str) -> bool:
         """
@@ -253,9 +251,13 @@ class SessionCache:
         
         elif pattern:
             # Invalidate entries matching a pattern (e.g., namespace, pod name)
+            pattern_lower = pattern.lower()
             keys_to_delete = [
                 k for k, v in self._cache.items()
-                if pattern.lower() in str(v.value).lower()
+                if (
+                    pattern_lower in str(v.value).lower()
+                    or pattern_lower in k.lower()
+                )
             ]
             for key in keys_to_delete:
                 del self._cache[key]
@@ -295,7 +297,12 @@ class SessionCache:
             "Session Cache Summary",
             "=" * 70,
             "",
-            str(self._stats),
+            "Cache Stats:",
+            f"  Hits: {self._stats.hits}",
+            f"  Misses: {self._stats.misses}",
+            f"  Hit Rate: {self._stats.hit_rate:.0%}",
+            f"  Evictions: {self._stats.evictions}",
+            f"  Current Entries: {self._stats.total_entries}",
             "",
             "Per-Tool Statistics:",
         ]

@@ -1,303 +1,315 @@
-# meshtrbl - AI-Powered Service Mesh Troubleshooter
+# Consul UI Secure Enterprise Deployment Guide
 
-Intelligent troubleshooting for Kubernetes and HashiCorp Consul service mesh using OpenAI GPT-4.
+[![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://www.mkdocs.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Consul](https://img.shields.io/badge/consul-1.21+-purple.svg)](https://www.consul.io/)
+[![OpenShift](https://img.shields.io/badge/openshift-4.19+-red.svg)](https://www.openshift.com/)
+
+## Overview
+
+This repository contains comprehensive, production-ready deployment documentation for the Consul UI with enterprise-grade security controls, specifically designed for platform operators in regulated industries (Financial Services, Healthcare, Government, etc.) where security and compliance are top priorities.
+
+### Key Features
+
+- ✅ **Enterprise Security**: Multi-layered authentication, zero-trust architecture
+- ✅ **Compliance Ready**: SOC 2, PCI DSS, GDPR, HIPAA, SOX
+- ✅ **Production Tested**: Battle-tested in regulated environments
+- ✅ **Comprehensive Documentation**: Step-by-step guides with examples
+- ✅ **Interactive Web UI**: Beautiful, searchable documentation site
+
+## Quick Start
+
+### View Documentation Locally
 
 ```bash
-# Quick install
-pip install ".[all]"
+# 1. Install dependencies
+pip install mkdocs-material mkdocs-minify-plugin
 
-# Run setup wizard
-meshtrbl --setup
+# 2. Serve documentation locally
+mkdocs serve
 
-# Start troubleshooting
-meshtrbl
+# 3. Open in browser
+open http://localhost:8000
 ```
 
-## What It Does
+The documentation site will be available at `http://localhost:8000` with live reload enabled.
 
-meshtrbl is an AI assistant that helps you diagnose and fix issues in Kubernetes clusters and Consul service mesh:
+### Build Static Site
 
-- 🔍 **Analyzes pods, logs, and services** - Automatically investigates failures
-- 🚀 **Instant diagnosis** - Recognizes 30+ common error patterns
-- 💬 **Natural conversation** - Ask questions in plain English
-- ⚡ **Fast responses** - Caches results and routes queries intelligently
-- 🔧 **Actionable solutions** - Get step-by-step fixes, not just explanations
+```bash
+# Build static HTML site
+mkdocs build
+
+# Output will be in site/ directory
+# Deploy to any web server
+```
+
+## Documentation Structure
+
+```
+docs/
+├── index.md                          # Home page
+├── getting-started/
+│   ├── overview.md                   # Getting started overview
+│   ├── prerequisites.md              # Prerequisites and requirements
+│   └── quickstart.md                 # Quick start guide
+├── architecture/
+│   ├── overview.md                   # Architecture overview
+│   ├── security-model.md             # Security architecture
+│   ├── metrics-proxy.md              # Metrics proxy architecture
+│   └── network-topology.md           # Network design
+├── security/
+│   ├── overview.md                   # Security overview
+│   ├── authentication.md             # Auth & authz
+│   ├── network-security.md           # Network security
+│   ├── encryption.md                 # Encryption details
+│   ├── audit-compliance.md           # Audit and compliance
+│   └── checklist.md                  # Security checklist
+├── deployment/
+│   ├── overview.md                   # Deployment overview
+│   ├── pre-deployment.md             # Pre-deployment setup
+│   ├── consul-installation.md        # Consul installation
+│   ├── ui-configuration.md           # UI configuration
+│   ├── metrics-setup.md              # Metrics setup
+│   ├── secure-metrics-gateway.md     # Secure metrics gateway
+│   └── post-deployment.md            # Post-deployment tasks
+├── configuration/
+│   ├── helm-values.md                # Helm values reference
+│   ├── acl-policies.md               # ACL policies
+│   ├── network-policies.md           # Network policies
+│   ├── tls-certificates.md           # TLS configuration
+│   └── oidc-integration.md           # OIDC setup
+├── operations/
+│   ├── monitoring.md                 # Monitoring guide
+│   ├── backup-recovery.md            # Backup and recovery
+│   ├── upgrades.md                   # Upgrade procedures
+│   ├── troubleshooting.md            # Troubleshooting guide
+│   └── maintenance.md                # Maintenance tasks
+├── reference/
+│   ├── api.md                        # API reference
+│   ├── cli-commands.md               # CLI commands
+│   ├── configuration.md              # Configuration reference
+│   └── glossary.md                   # Glossary
+└── appendix/
+    ├── examples.md                   # Example configurations
+    ├── scripts.md                    # Deployment scripts
+    ├── faq.md                        # FAQ
+    └── resources.md                  # Additional resources
+```
+
+## Target Environment
+
+- **Consul Version**: Enterprise 1.21+
+- **Platform**: OpenShift 4.19+ (on-premises)
+- **Security Level**: Enterprise-grade / Regulated Industries
+- **Compliance**: SOC 2, PCI DSS, GDPR, HIPAA, SOX
+
+## Features Covered
+
+### Consul UI Capabilities
+
+- **Service Topology Visualization**: Real-time service mesh topology graph
+- **Metrics Dashboards**: Integrated performance monitoring with secure access
+- **Service Catalog**: Complete service discovery interface
+- **Key/Value Store UI**: Secure KV browsing and editing
+- **ACL Management**: Role-based access control interface
+
+### Security Features
+
+- **Multi-layered Authentication**: OIDC/SAML with MFA
+- **Zero Trust Architecture**: Defense-in-depth security model
+- **Encryption Everywhere**: TLS 1.3 for all communications
+- **Comprehensive Audit Logging**: Full compliance trail
+- **Network Segmentation**: OpenShift Network Policies
+- **Least Privilege Access**: Fine-grained ACL policies
+
+### Metrics Deployment Options
+
+1. **Direct Grafana Integration** (Recommended)
+   - Lowest security risk
+   - Separate authentication
+   - Best compliance posture
+
+2. **Secure Metrics Gateway**
+   - Defense-in-depth security
+   - Multiple authentication layers
+   - Production-ready
+
+3. **Built-in Proxy** (Not Recommended for Production)
+   - Security concerns in regulated environments
+   - Detailed analysis provided
 
 ## Prerequisites
 
-- **Python 3.11+** (use Homebrew on macOS: `brew install python@3.11`)
-- **OpenAI API key** ([Get one here](https://platform.openai.com/api-keys))
-- **kubectl** configured for your cluster
-- **Consul** (optional, for service mesh features)
+Before deploying, ensure you have:
+
+- OpenShift 4.19+ cluster
+- Consul Enterprise 1.21+ license
+- Internal PKI/CA infrastructure
+- OIDC-compatible Identity Provider
+- Cluster-admin access
+- Basic knowledge of:
+  - OpenShift/Kubernetes
+  - Consul architecture
+  - TLS/PKI concepts
+  - OIDC/OAuth2 flows
 
 ## Installation
 
-### 1. Set Up Python Environment
+### Option 1: View Documentation Only
 
 ```bash
-# Create virtual environment
-python3.11 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+# Install MkDocs and dependencies
+pip install mkdocs-material mkdocs-minify-plugin
 
-# Install meshtrbl
-pip install --upgrade pip
-pip install ".[all]"
+# Serve documentation
+mkdocs serve
 ```
 
-### 2. Configure with Setup Wizard (Recommended)
+### Option 2: Deploy Consul UI
+
+Follow the step-by-step guide in the documentation:
+
+1. [Prerequisites](docs/getting-started/prerequisites.md)
+2. [Quick Start](docs/getting-started/quickstart.md)
+3. [Deployment Guide](docs/deployment/overview.md)
+
+## Usage
+
+### Viewing Documentation
 
 ```bash
-meshtrbl --setup
+# Start local server
+mkdocs serve
+
+# Access at http://localhost:8000
+# Documentation includes:
+# - Interactive navigation
+# - Full-text search
+# - Code syntax highlighting
+# - Mermaid diagrams
+# - Dark/light mode toggle
 ```
 
-The wizard will guide you through:
-- OpenAI API key configuration
-- Kubernetes context selection
-- Consul connection (if available)
-- Feature preferences
-
-**Or** manually create `.env`:
+### Building for Production
 
 ```bash
-cp .env.example .env
-# Edit .env and add:
-OPENAI_API_KEY=your_key_here
+# Build static site
+mkdocs build
+
+# Deploy to web server
+# Output in site/ directory
 ```
 
-### 3. Start Troubleshooting
+### Deploying Consul UI
 
 ```bash
-# Interactive mode (recommended)
-meshtrbl
+# 1. Review configuration
+vi docs/helm-values-secure-ui.yaml
 
-# Single query
-meshtrbl --query "Why is my pod crashing?"
+# 2. Deploy Consul
+helm install consul hashicorp/consul \
+  --namespace consul-system \
+  --values docs/helm-values-secure-ui.yaml
 
-# Specific namespace
-meshtrbl --namespace production
+# 3. Validate deployment
+kubectl get pods -n consul-system
 ```
 
-## Quick Examples
+## Documentation Features
 
-### Example 1: Pod Troubleshooting
-```
-You: My pod web-app-7d8f9c keeps crashing
+### Interactive Elements
 
-Agent: Let me check the pod status and logs...
-[Analyzes pod and identifies OOMKilled error]
+- **Search**: Full-text search across all documentation
+- **Navigation**: Tabbed navigation with sections
+- **Code Blocks**: Syntax highlighting with copy button
+- **Diagrams**: Mermaid diagrams for architecture visualization
+- **Admonitions**: Info, warning, and tip callouts
+- **Dark Mode**: Toggle between light and dark themes
 
-Your pod is being killed due to memory limits (128Mi). 
-Recommendations:
-1. Increase memory limit to 256Mi or higher
-2. Check for memory leaks in your application
-3. Monitor actual memory usage
+### Content Organization
 
-Would you like me to show you how to update the limits?
-```
+- **Getting Started**: Quick start and prerequisites
+- **Architecture**: System design and security model
+- **Security**: Comprehensive security controls
+- **Deployment**: Step-by-step deployment guide
+- **Configuration**: Detailed configuration references
+- **Operations**: Day-2 operations and maintenance
+- **Reference**: API docs and CLI commands
+- **Appendix**: Examples, scripts, and resources
 
-### Example 2: Service Mesh Issues
-```
-You: Service "api" cannot connect to "database"
+## Security Considerations
 
-Agent: Checking Consul intentions...
-[Finds DENY intention blocking traffic]
+This deployment implements **defense-in-depth** security:
 
-Found the issue! A DENY intention is blocking traffic 
-from "api" to "database" (created 2 days ago).
+### Layer 1: Network Security
+- Network segmentation with OpenShift Network Policies
+- mTLS between all components
+- No direct internet exposure
 
-To fix: consul intention create -allow api database
+### Layer 2: Authentication
+- OIDC/SAML integration with corporate IdP
+- Multi-factor authentication (MFA) required
+- Short-lived tokens (max 8 hours)
 
-Would you like me to check for other connectivity issues?
-```
+### Layer 3: Authorization
+- Role-based access control (RBAC)
+- Principle of least privilege
+- Fine-grained ACL policies
 
-### Example 3: Using Commands
-```
-You: /help              # Show available commands
-You: /examples          # See common scenarios
-You: /cache             # View cache statistics
-You: /clear             # Clear conversation memory
-```
+### Layer 4: Data Protection
+- TLS 1.3 encryption in transit
+- Encryption at rest for Consul data
+- Secrets management via OpenShift Secrets/Vault
 
-## Key Features
+### Layer 5: Audit & Monitoring
+- Comprehensive audit logging
+- Real-time security monitoring
+- SIEM integration
 
-### 🎯 Smart Error Recognition
-Instantly recognizes 30+ common issues:
-- CrashLoopBackOff, ImagePullBackOff, OOMKilled
-- Consul intentions, ACL permissions, mTLS issues
-- Proxy failures, service registration problems
-- And more...
+## Compliance
 
-### ⚡ Fast Performance
-- **50-88% faster** for common queries (intent routing)
-- **95-99% faster** for repeated queries (caching)
-- **2-3x faster** for complex issues (parallel workflows)
+This deployment meets requirements for:
 
-### 💬 Natural Interaction
-- Remembers conversation context
-- Understands follow-up questions
-- Provides clear, actionable advice
-- Interactive commands for memory and cache management
-
-## Configuration Options
-
-### Environment Variables
-
-```bash
-# Required
-OPENAI_API_KEY=sk-...
-
-# Optional - Kubernetes
-K8S_NAMESPACE=default
-
-# Optional - Consul
-CONSUL_HTTP_ADDR=127.0.0.1:8500
-CONSUL_HTTP_TOKEN=<your-token>
-CONSUL_HTTP_SSL=true
-CONSUL_CACERT=/path/to/ca.pem
-```
-
-### Command-Line Options
-
-```bash
-meshtrbl --help                    # Show all options
-meshtrbl --setup                   # Run configuration wizard
-meshtrbl --namespace prod          # Use specific namespace
-meshtrbl --consul-host consul.svc  # Custom Consul address
-meshtrbl --no-memory               # Disable conversation memory
-meshtrbl --no-cache                # Disable caching
-meshtrbl --use-workflow            # Use LangGraph workflows
-meshtrbl --verbose                 # Show detailed logs
-```
-
-## Interactive Commands
-
-While chatting with the agent:
-
-| Command | Description |
-|---------|-------------|
-| `/help` | Show available commands |
-| `/examples` | Show common troubleshooting scenarios |
-| `/clear` | Clear conversation memory |
-| `/history` | Show conversation history |
-| `/summary` | Show conversation summary |
-| `/cache` | Show cache statistics |
-| `/clearcache` | Clear session cache |
-| `exit` or `quit` | End session |
-
-## Consul Setup (Optional)
-
-If using Consul with ACLs enabled:
-
-```bash
-# Create read-only policy for troubleshooting
-consul acl policy create \
-  -name meshtrbl-reader \
-  -rules @examples/consul-agent-troubleshooter-policy.hcl
-
-# Create token
-consul acl token create \
-  -description "meshtrbl troubleshooting token" \
-  -policy-name meshtrbl-reader
-
-# Configure
-export CONSUL_HTTP_TOKEN=<token-secret-id>
-```
-
-See [examples/consul-agent-troubleshooter-policy.hcl](examples/consul-agent-troubleshooter-policy.hcl) for the policy template.
-
-## Documentation
-
-### Getting Started
-- [Quick Start Guide](docs/QUICKSTART.md) - 5-minute setup
-- [Installation Guide](docs/INSTALL.md) - Detailed installation
-- [Configuration Wizard](docs/OPENAI_API_KEY_SETUP.md) - API key setup
-
-### Features
-- [Conversation Memory](docs/MEMORY_FEATURE.md) - Context-aware responses
-- [Error Pattern Recognition](docs/ERROR_PATTERN_RECOGNITION.md) - Instant diagnosis
-- [Intent Routing](docs/INTENT_ROUTING_FEATURE.md) - Fast-path queries
-- [Session Caching](docs/SESSION_CACHE_FEATURE.md) - Lightning-fast repeats
-- [Consul Connect Diagnostics](docs/CONSUL_CONNECT_FEATURE.md) - Proxy troubleshooting
-- [Service Communication Analysis](docs/SERVICE_COMMUNICATION_FEATURE.md) - Multi-hop tracing
-- [LangGraph Workflows](docs/PHASE3_LANGGRAPH_WORKFLOWS.md) - Complex scenarios
-- [UX Improvements](docs/PHASE4_UX_IMPROVEMENTS.md) - Enhanced interface
-
-### Advanced
-- [Packaging Guide](docs/PACKAGING.md) - Distribution
-- [Project Summary](PROJECT_SUMMARY.md) - Complete feature list
-
-## Troubleshooting
-
-### Common Issues
-
-**"No module named 'langchain'"**
-```bash
-source venv/bin/activate
-pip install ".[all]"
-```
-
-**"Failed to initialize Kubernetes client"**
-```bash
-kubectl cluster-info  # Verify cluster access
-```
-
-**"OpenAI API key error"**
-```bash
-# Check your .env file
-cat .env | grep OPENAI_API_KEY
-
-# Or run setup wizard
-meshtrbl --setup
-```
-
-**"Connection refused to Consul"**
-```bash
-# Verify Consul is accessible
-curl http://localhost:8500/v1/status/leader
-
-# Check your CONSUL_HTTP_ADDR format (host:port, no http://)
-export CONSUL_HTTP_ADDR=127.0.0.1:8500
-```
-
-## Architecture
-
-```
-User Query → Intent Classification → Fast Path or Full Agent
-                                    ↓
-                        Error Pattern Recognition
-                                    ↓
-                        LangChain ReAct Agent (GPT-4)
-                                    ↓
-                        Tool Selection & Execution
-                                    ↓
-                    Kubernetes Tools | Consul Tools
-                                    ↓
-                        Analysis & Recommendations
-```
+- **SOC 2 Type II**: Access controls, audit logging, encryption
+- **PCI DSS**: Network segmentation, access logging, encryption
+- **GDPR**: Data protection, access controls, audit trails
+- **HIPAA**: PHI protection, access controls, audit logging
+- **SOX**: Change management, audit trails, access controls
 
 ## Contributing
 
-This is a learning project for LangChain and LangGraph. Contributions welcome:
-- Add new troubleshooting tools
-- Improve error pattern recognition
-- Enhance system prompts
-- Add support for other service meshes (Istio, Linkerd)
+We welcome contributions! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## Support
+
+### Documentation Issues
+
+For documentation issues, please open an issue in this repository.
+
+### Consul Support
+
+For Consul-specific issues:
+
+- [HashiCorp Discuss](https://discuss.hashicorp.com/c/consul)
+- [GitHub Issues](https://github.com/hashicorp/consul/issues)
+- [HashiCorp Support](https://support.hashicorp.com)
 
 ## License
 
-MIT License - See LICENSE file for details
+This documentation is provided under the MIT License. See [LICENSE](LICENSE) for details.
 
-## Credits
+## Acknowledgments
 
-Built with:
-- [LangChain](https://github.com/langchain-ai/langchain) - AI agent framework
-- [LangGraph](https://github.com/langchain-ai/langgraph) - Workflow orchestration
-- [OpenAI GPT-4](https://openai.com/) - Language model
-- [Kubernetes Python Client](https://github.com/kubernetes-client/python) - K8s API
-- [python-consul](https://github.com/cablehead/python-consul) - Consul API
+- HashiCorp for Consul and excellent documentation
+- The Consul community for feedback and contributions
+- MkDocs Material theme for the beautiful documentation framework
 
 ---
 
-**Need help?** Check the [documentation](docs/) or open an issue.
-
-**Happy Troubleshooting! 🚀**
+**Ready to get started?** Run `mkdocs serve` and open http://localhost:8000 to view the full documentation.

@@ -1,0 +1,204 @@
+# Consul UI Secure Enterprise Deployment Documentation
+site_name: Consul UI Secure Enterprise Deployment Guide
+site_description: Production-ready deployment guide for Consul UI with enterprise-grade security for regulated industries
+site_author: HashiCorp Solutions Architecture
+site_url: https://localhost:8000
+
+# Repository
+repo_name: consul-ui-secure-deployment
+repo_url: https://github.com/your-org/consul-ui-secure-deployment
+edit_uri: ""
+
+# Copyright
+copyright: Copyright &copy; 2026 Your Organization
+
+# Theme configuration
+theme:
+  name: material
+  language: en
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  
+  font:
+    text: Roboto
+    code: Roboto Mono
+  
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - search.share
+    - toc.follow
+    - content.code.copy
+    - content.code.annotate
+  
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/security
+
+# Plugins
+plugins:
+  - search:
+      lang: en
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+      htmlmin_opts:
+        remove_comments: true
+      cache_safe: true
+
+# Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Extra CSS
+extra_css:
+  - stylesheets/extra.css
+
+# Extra JavaScript
+extra_javascript:
+  - javascripts/extra.js
+
+# Extra
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/your-org
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/company/your-org
+  
+  analytics:
+    feedback:
+      title: Was this page helpful?
+      ratings:
+        - icon: material/emoticon-happy-outline
+          name: This page was helpful
+          data: 1
+          note: >-
+            Thanks for your feedback!
+        - icon: material/emoticon-sad-outline
+          name: This page could be improved
+          data: 0
+          note: >-
+            Thanks for your feedback! Help us improve by providing more details.
+
+# Navigation
+nav:
+  - Home: index.md
+  
+  - Getting Started:
+    - Overview: getting-started/overview.md
+    - Prerequisites: getting-started/prerequisites.md
+    - Quick Start: getting-started/quickstart.md
+  
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Security Model: architecture/security-model.md
+    - Metrics Proxy Architecture: architecture/metrics-proxy.md
+    - Network Topology: architecture/network-topology.md
+  
+  - Security:
+    - Security Overview: security/overview.md
+    - Authentication & Authorization: security/authentication.md
+    - Network Security: security/network-security.md
+    - Encryption: security/encryption.md
+    - Audit & Compliance: security/audit-compliance.md
+    - Security Checklist: security/checklist.md
+  
+  - Deployment:
+    - Deployment Overview: deployment/overview.md
+    - Pre-Deployment Setup: deployment/pre-deployment.md
+    - Consul Installation: deployment/consul-installation.md
+    - UI Configuration: deployment/ui-configuration.md
+    - Metrics Setup: deployment/metrics-setup.md
+    - Secure Metrics Gateway: deployment/secure-metrics-gateway.md
+    - Post-Deployment: deployment/post-deployment.md
+  
+  - Configuration:
+    - Helm Values: configuration/helm-values.md
+    - ACL Policies: configuration/acl-policies.md
+    - Network Policies: configuration/network-policies.md
+    - TLS Certificates: configuration/tls-certificates.md
+    - OIDC Integration: configuration/oidc-integration.md
+  
+  - Operations:
+    - Monitoring: operations/monitoring.md
+    - Backup & Recovery: operations/backup-recovery.md
+    - Upgrades: operations/upgrades.md
+    - Troubleshooting: operations/troubleshooting.md
+    - Maintenance: operations/maintenance.md
+  
+  - Reference:
+    - API Reference: reference/api.md
+    - CLI Commands: reference/cli-commands.md
+    - Configuration Reference: reference/configuration.md
+    - Glossary: reference/glossary.md
+  
+  - Appendix:
+    - Example Configurations: appendix/examples.md
+    - Scripts: appendix/scripts.md
+    - FAQ: appendix/faq.md
+    - Additional Resources: appendix/resources.md
+
+# Made with Bob

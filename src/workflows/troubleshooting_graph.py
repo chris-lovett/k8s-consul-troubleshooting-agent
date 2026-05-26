@@ -113,6 +113,8 @@ class TroubleshootingWorkflow:
         workflow.add_node("k8s_diagnostic", self._k8s_diagnostic_node)
         workflow.add_node("consul_diagnostic", self._consul_diagnostic_node)
         workflow.add_node("proxy_diagnostic", self._proxy_diagnostic_node)
+        workflow.add_node("k8s_consul_diagnostic", self._k8s_consul_diagnostic_node)
+        workflow.add_node("full_stack_diagnostic", self._full_stack_diagnostic_node)
         workflow.add_node("analyze_results", self._analyze_results_node)
         workflow.add_node("generate_remediation", self._generate_remediation_node)
         workflow.add_node("suggest_automation", self._suggest_automation_node)
@@ -128,8 +130,8 @@ class TroubleshootingWorkflow:
                 "k8s_only": "k8s_diagnostic",
                 "consul_only": "consul_diagnostic",
                 "proxy_only": "proxy_diagnostic",
-                "k8s_consul": "k8s_diagnostic",  # Will parallel to consul
-                "full_stack": "k8s_diagnostic",  # Will parallel to all
+                "k8s_consul": "k8s_consul_diagnostic",
+                "full_stack": "full_stack_diagnostic",
                 "unknown": "analyze_results"
             }
         )
@@ -138,6 +140,8 @@ class TroubleshootingWorkflow:
         workflow.add_edge("k8s_diagnostic", "analyze_results")
         workflow.add_edge("consul_diagnostic", "analyze_results")
         workflow.add_edge("proxy_diagnostic", "analyze_results")
+        workflow.add_edge("k8s_consul_diagnostic", "analyze_results")
+        workflow.add_edge("full_stack_diagnostic", "analyze_results")
         
         # Sequential flow after analysis
         workflow.add_edge("analyze_results", "generate_remediation")
@@ -448,6 +452,45 @@ class TroubleshootingWorkflow:
                 AIMessage(content=f"Root cause analysis: {root_cause}")
             ]
         }
+
+    def _k8s_consul_diagnostic_node(self, state: WorkflowState) -> WorkflowState:
+        """Run Kubernetes and Consul diagnostics in one routed branch."""
+        if self.verbose:
+            print("\n[Workflow] Running combined Kubernetes + Consul diagnostics...")
+
+        state_with_k8s = self._k8s_diagnostic_node(state)
+        state_with_consul = self._consul_diagnostic_node(state_with_k8s)
+
+        execution_path = state_with_consul.get("execution_path", [])
+        execution_path.append("k8s_consul_diagnostic")
+
+        return {
+            **state_with_consul,
+            "execution_path": execution_path,
+            "messages": [
+                AIMessage(content="Combined Kubernetes and Consul diagnostics completed")
+            ]
+        }
+
+    def _full_stack_diagnostic_node(self, state: WorkflowState) -> WorkflowState:
+        """Run Kubernetes, Consul, and proxy diagnostics in one routed branch."""
+        if self.verbose:
+            print("\n[Workflow] Running full-stack diagnostics...")
+
+        state_with_k8s = self._k8s_diagnostic_node(state)
+        state_with_consul = self._consul_diagnostic_node(state_with_k8s)
+        state_with_proxy = self._proxy_diagnostic_node(state_with_consul)
+
+        execution_path = state_with_proxy.get("execution_path", [])
+        execution_path.append("full_stack_diagnostic")
+
+        return {
+            **state_with_proxy,
+            "execution_path": execution_path,
+            "messages": [
+                AIMessage(content="Full-stack diagnostics completed")
+            ]
+        }
     
     def _generate_remediation_node(self, state: WorkflowState) -> WorkflowState:
         """
@@ -463,8 +506,8 @@ class TroubleshootingWorkflow:
         remediation_steps = []
         
         for pattern in patterns:
-            if "solution" in pattern:
-                remediation_steps.extend(pattern["solution"])
+            if "solutions" in pattern:
+                remediation_steps.extend(pattern["solutions"])
         
         # Use LLM to generate additional steps if needed
         if not remediation_steps or len(remediation_steps) < 3:

@@ -70,7 +70,7 @@ Repository = "https://github.com/yourusername/meshtrbl"
 meshtrbl = "src.agent:main"
 
 [tool.setuptools]
-packages = ["src", "src.tools", "src.prompts", "src.workflows"]
+packages = ["src", "src.core", "src.tools", "src.prompts", "src.workflows"]
 
 [tool.setuptools.package-data]
 src = ["prompts/*.py"]

@@ -42,6 +42,8 @@ class TestProxyStatusCheck:
                     V1ContainerStatus(
                         name="consul-connect-envoy-sidecar",
                         image="envoyproxy/envoy:v1.24.0",
+                        image_id="docker://envoyproxy/envoy@sha256:test",
+                        container_id="docker://test-container-id",
                         ready=True,
                         restart_count=0,
                         state=V1ContainerState(
@@ -95,6 +97,8 @@ class TestProxyStatusCheck:
                     V1ContainerStatus(
                         name="consul-connect-envoy-sidecar",
                         image="envoyproxy/envoy:v1.24.0",
+                        image_id="docker://envoyproxy/envoy@sha256:test",
+                        container_id="docker://test-container-id",
                         ready=False,
                         restart_count=3,
                         state=V1ContainerState(

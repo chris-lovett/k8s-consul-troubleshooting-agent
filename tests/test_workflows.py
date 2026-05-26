@@ -8,6 +8,8 @@ import pytest
 from unittest.mock import Mock, MagicMock, patch
 from datetime import datetime
 
+pytest.importorskip("langgraph", reason="workflow tests require optional langgraph dependency")
+
 from src.workflows import TroubleshootingWorkflow, WorkflowState
 from src.tools import KubernetesTools, ConsulTools
 from langchain_openai import ChatOpenAI
