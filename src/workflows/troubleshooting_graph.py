@@ -21,6 +21,7 @@ from langchain_openai import ChatOpenAI
 from ..core.interfaces import KubernetesAdapterProtocol, ConsulAdapterProtocol
 from ..intent_classifier import intent_classifier, IntentType
 from ..error_patterns import pattern_matcher
+from ..domain.models import DiagnosticsResult, RemediationPlan, AutomatedFix
 
 
 class WorkflowState(TypedDict):
@@ -39,6 +40,9 @@ class WorkflowState(TypedDict):
     k8s_diagnostics: NotRequired[Dict[str, Any]]
     consul_diagnostics: NotRequired[Dict[str, Any]]
     proxy_diagnostics: NotRequired[Dict[str, Any]]
+    k8s_diagnostics_model: NotRequired[DiagnosticsResult]
+    consul_diagnostics_model: NotRequired[DiagnosticsResult]
+    proxy_diagnostics_model: NotRequired[DiagnosticsResult]
     
     # Analysis results
     detected_patterns: NotRequired[List[Dict[str, Any]]]
@@ -48,6 +52,7 @@ class WorkflowState(TypedDict):
     # Remediation
     remediation_steps: NotRequired[List[str]]
     automated_fixes: NotRequired[List[Dict[str, Any]]]
+    remediation_plan_model: NotRequired[RemediationPlan]
     
     # Workflow control
     next_action: NotRequired[str]
@@ -285,7 +290,7 @@ class TroubleshootingWorkflow:
         if self.verbose:
             print("\n[Workflow] Running Kubernetes diagnostics...")
         
-        diagnostics = {}
+        diagnostics = DiagnosticsResult()
         intent = state.get("intent_classification", {})
         entities = intent.get("entities", {})
         
@@ -297,19 +302,19 @@ class TroubleshootingWorkflow:
             if pod_name:
                 # Get pod status
                 status_result = self.k8s_tools.get_pod_status(pod_name, namespace)
-                diagnostics["pod_status"] = status_result
+                diagnostics.with_entry("pod_status", status_result)
                 
                 # Get pod logs if pod exists
                 if "not found" not in status_result.lower():
                     logs_result = self.k8s_tools.get_pod_logs(pod_name, namespace)
-                    diagnostics["pod_logs"] = logs_result
+                    diagnostics.with_entry("pod_logs", logs_result)
             else:
                 # List pods in namespace
                 list_result = self.k8s_tools.list_pods(namespace)
-                diagnostics["pod_list"] = list_result
+                diagnostics.with_entry("pod_list", list_result)
         
         except Exception as e:
-            diagnostics["error"] = str(e)
+            diagnostics.with_error(e)
         
         # Track execution path
         execution_path = state.get("execution_path", [])
@@ -317,7 +322,8 @@ class TroubleshootingWorkflow:
         
         return {
             **state,
-            "k8s_diagnostics": diagnostics,
+            "k8s_diagnostics": diagnostics.to_dict(),
+            "k8s_diagnostics_model": diagnostics,
             "execution_path": execution_path,
             "messages": [
                 AIMessage(content="Kubernetes diagnostics completed")
@@ -333,7 +339,7 @@ class TroubleshootingWorkflow:
         if self.verbose:
             print("\n[Workflow] Running Consul diagnostics...")
         
-        diagnostics = {}
+        diagnostics = DiagnosticsResult()
         intent = state.get("intent_classification", {})
         entities = intent.get("entities", {})
         
@@ -344,18 +350,18 @@ class TroubleshootingWorkflow:
             if service_name:
                 # Get service health
                 health_result = self.consul_tools.get_service_health(service_name)
-                diagnostics["service_health"] = health_result
+                diagnostics.with_entry("service_health", health_result)
                 
                 # Get service instances
                 instances_result = self.consul_tools.get_service_instances(service_name)
-                diagnostics["service_instances"] = instances_result
+                diagnostics.with_entry("service_instances", instances_result)
             else:
                 # List all services
                 services_result = self.consul_tools.list_services()
-                diagnostics["services_list"] = services_result
+                diagnostics.with_entry("services_list", services_result)
         
         except Exception as e:
-            diagnostics["error"] = str(e)
+            diagnostics.with_error(e)
         
         # Track execution path
         execution_path = state.get("execution_path", [])
@@ -363,7 +369,8 @@ class TroubleshootingWorkflow:
         
         return {
             **state,
-            "consul_diagnostics": diagnostics,
+            "consul_diagnostics": diagnostics.to_dict(),
+            "consul_diagnostics_model": diagnostics,
             "execution_path": execution_path,
             "messages": [
                 AIMessage(content="Consul diagnostics completed")
@@ -379,7 +386,7 @@ class TroubleshootingWorkflow:
         if self.verbose:
             print("\n[Workflow] Running proxy diagnostics...")
         
-        diagnostics = {}
+        diagnostics = DiagnosticsResult()
         intent = state.get("intent_classification", {})
         entities = intent.get("entities", {})
         
@@ -395,10 +402,10 @@ class TroubleshootingWorkflow:
                 
                 # Get proxy status
                 status_result = connect_tools.get_proxy_status(pod_name)
-                diagnostics["proxy_status"] = status_result
+                diagnostics.with_entry("proxy_status", status_result)
         
         except Exception as e:
-            diagnostics["error"] = str(e)
+            diagnostics.with_error(e)
         
         # Track execution path
         execution_path = state.get("execution_path", [])
@@ -406,7 +413,8 @@ class TroubleshootingWorkflow:
         
         return {
             **state,
-            "proxy_diagnostics": diagnostics,
+            "proxy_diagnostics": diagnostics.to_dict(),
+            "proxy_diagnostics_model": diagnostics,
             "execution_path": execution_path,
             "messages": [
                 AIMessage(content="Proxy diagnostics completed")
@@ -501,9 +509,12 @@ class TroubleshootingWorkflow:
         
         root_cause = state.get("root_cause", "Unknown")
         patterns = state.get("detected_patterns", [])
+        existing_plan = state.get("remediation_plan_model")
+        remediation_plan = existing_plan if existing_plan else RemediationPlan(root_cause=root_cause)
+        remediation_plan.root_cause = root_cause
         
         # Start with pattern-based solutions
-        remediation_steps = []
+        remediation_steps = list(remediation_plan.remediation_steps)
         
         for pattern in patterns:
             if "solutions" in pattern:
@@ -522,6 +533,8 @@ Format as a numbered list.
             content = response.content if isinstance(response.content, str) else str(response.content)
             llm_steps = content.strip().split("\n")
             remediation_steps.extend([s.strip() for s in llm_steps if s.strip()])
+
+        remediation_plan.remediation_steps = remediation_steps
         
         # Track execution path
         execution_path = state.get("execution_path", [])
@@ -530,6 +543,7 @@ Format as a numbered list.
         return {
             **state,
             "remediation_steps": remediation_steps,
+            "remediation_plan_model": remediation_plan,
             "execution_path": execution_path,
             "messages": [
                 AIMessage(content="Remediation steps generated")
@@ -545,18 +559,25 @@ Format as a numbered list.
         if self.verbose:
             print("\n[Workflow] Suggesting automated fixes...")
         
-        automated_fixes = []
+        remediation_plan = state.get("remediation_plan_model")
+        if remediation_plan is None:
+            remediation_plan = RemediationPlan(root_cause=state.get("root_cause", ""))
+            remediation_plan.remediation_steps = list(state.get("remediation_steps", []))
         patterns = state.get("detected_patterns", [])
         
         # Check if any patterns have automated fixes
         for pattern in patterns:
             if pattern.get("automatable", False):
-                automated_fixes.append({
-                    "pattern": pattern["name"],
-                    "fix_type": pattern.get("fix_type", "manual"),
-                    "description": pattern.get("automation_description", ""),
-                    "safe": pattern.get("safe_to_automate", False)
-                })
+                remediation_plan.add_automated_fix(
+                    AutomatedFix(
+                        pattern=pattern["name"],
+                        fix_type=pattern.get("fix_type", "manual"),
+                        description=pattern.get("automation_description", ""),
+                        safe=pattern.get("safe_to_automate", False),
+                    )
+                )
+
+        automated_fixes = remediation_plan.automated_fixes_as_dicts()
         
         # Track execution path and end time
         execution_path = state.get("execution_path", [])
@@ -565,6 +586,7 @@ Format as a numbered list.
         return {
             **state,
             "automated_fixes": automated_fixes,
+            "remediation_plan_model": remediation_plan,
             "workflow_end_time": datetime.now(),
             "execution_path": execution_path,
             "messages": [

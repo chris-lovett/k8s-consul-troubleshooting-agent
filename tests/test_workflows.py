@@ -11,6 +11,7 @@ from datetime import datetime
 pytest.importorskip("langgraph", reason="workflow tests require optional langgraph dependency")
 
 from src.workflows import TroubleshootingWorkflow, WorkflowState
+from src.domain.models import DiagnosticsResult, RemediationPlan
 from src.tools import KubernetesTools, ConsulTools
 from langchain_openai import ChatOpenAI
 
@@ -178,6 +179,8 @@ class TestTroubleshootingWorkflow:
         result = workflow._k8s_diagnostic_node(state)
         
         assert "k8s_diagnostics" in result
+        assert "k8s_diagnostics_model" in result
+        assert isinstance(result["k8s_diagnostics_model"], DiagnosticsResult)
         assert "execution_path" in result
         assert "k8s_diagnostic" in result["execution_path"]
         assert workflow.k8s_tools.get_pod_status.called
@@ -236,6 +239,8 @@ class TestTroubleshootingWorkflow:
         result = workflow._generate_remediation_node(state)
         
         assert "remediation_steps" in result
+        assert "remediation_plan_model" in result
+        assert isinstance(result["remediation_plan_model"], RemediationPlan)
         assert "execution_path" in result
         assert "generate_remediation" in result["execution_path"]
         assert len(result["remediation_steps"]) > 0
@@ -265,6 +270,8 @@ class TestTroubleshootingWorkflow:
         result = workflow._suggest_automation_node(state)
         
         assert "automated_fixes" in result
+        assert "remediation_plan_model" in result
+        assert isinstance(result["remediation_plan_model"], RemediationPlan)
         assert "workflow_end_time" in result
         assert "execution_path" in result
         assert "suggest_automation" in result["execution_path"]

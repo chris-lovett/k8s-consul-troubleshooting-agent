@@ -31,6 +31,7 @@ from .application.services import (
     LLMRuntimeService,
     ToolFactoryService,
 )
+from .domain.models import RemediationPlan
 from .infrastructure.adapters import KubernetesAdapter, ConsulAdapter
 from .ux_utils import (
     RichOutput,
@@ -354,16 +355,26 @@ class TroubleshootingAgent:
                 output.append(f"Root Cause:\n{final_state['root_cause']}\n")
             
             # Show remediation steps
-            if "remediation_steps" in final_state and final_state["remediation_steps"]:
+            remediation_plan = final_state.get("remediation_plan_model")
+            remediation_steps = []
+            automated_fixes = []
+            if isinstance(remediation_plan, RemediationPlan):
+                remediation_steps = remediation_plan.remediation_steps
+                automated_fixes = remediation_plan.automated_fixes_as_dicts()
+            else:
+                remediation_steps = final_state.get("remediation_steps", [])
+                automated_fixes = final_state.get("automated_fixes", [])
+
+            if remediation_steps:
                 output.append("\nRemediation Steps:")
-                for i, step in enumerate(final_state["remediation_steps"][:5], 1):
+                for i, step in enumerate(remediation_steps[:5], 1):
                     output.append(f"{i}. {step}")
                 output.append("")
             
             # Show automated fixes if available
-            if "automated_fixes" in final_state and final_state["automated_fixes"]:
+            if automated_fixes:
                 output.append("\nAutomated Fix Suggestions:")
-                for fix in final_state["automated_fixes"]:
+                for fix in automated_fixes:
                     output.append(f"  • {fix['pattern']}: {fix['description']}")
                     if fix.get('safe', False):
                         output.append(f"    (Safe to automate)")

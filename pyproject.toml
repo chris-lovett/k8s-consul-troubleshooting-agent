@@ -76,6 +76,8 @@ packages = [
     "src.application.orchestration",
     "src.application.services",
     "src.core",
+    "src.domain",
+    "src.domain.models",
     "src.infrastructure",
     "src.infrastructure.adapters",
     "src.tools",
